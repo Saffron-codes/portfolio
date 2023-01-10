@@ -10,7 +10,7 @@ function PortfolioItem({ title, imgUrl, stack, link }) {
       >
          <img
             src={imgUrl}
-            alt="portfolio" 
+            alt="Image Unavailable" 
             className="w-full h-36 md:h-48 object-cover cursor-pointer"
          />
          <div className="w-full p-4">
