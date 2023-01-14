@@ -9,7 +9,7 @@ export default [
    },
    {
       title: 'Love Calculator App',
-      imgUrl: './public/assets/love_calculator.png',
+      imgUrl: '/assets/love_calculator.png',
       stack: ['Flutter', 'BLOC', 'API'],
       link: 'https://github.com/saffron-codes/love_calculator_app',
    },
