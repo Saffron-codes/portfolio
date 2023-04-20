@@ -5,7 +5,7 @@ export default [
       title: 'Svik',
       imgUrl: '/assets/svik.jpg',
       stack: ['Flutter', 'Hasura', 'Graphql'],
-      link: 'https://svik-app.web.app',
+      link: 'https://github.com/svikapp/svik',
    },
    {
       title: 'Love Calculator App',
