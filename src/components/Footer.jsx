@@ -26,7 +26,7 @@ function Footer() {
 						</a>
 						
 						<a 
-							href='https://instagram.com/saffron-codes'
+							href='https://instagram.com/saffron_dionysius'
 							className="bg-stone-400 p-2 font-semibold text-white inline-flex items-center space-x-2 rounded-full">
 							<FaInstagram size={20}/>
 						</a>
