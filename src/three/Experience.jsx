@@ -156,6 +156,7 @@ const LABEL_OFFSETS = {
   glassesCase: [0, 0.1, 0],
   penHolder: [0, 0.22, 0],
   steelTin: [0, 0.18, 0],
+  chair: [0, 1.25, 0.2],
   monitor: [0, 0.5, 0],
   laptop: [0, 0.36, 0],
   keyboard: [0, 0.12, 0],
@@ -167,7 +168,7 @@ const LABEL_OFFSETS = {
   switchboard: [0, 0.09, 0.05],
 };
 
-function Objects({ hovered, active }) {
+function Objects({ hovered, active, seated }) {
   return (
     <>
       {OBJECTS.map(({ name, position, rotation }) => {
@@ -181,7 +182,7 @@ function Objects({ hovered, active }) {
             key={name}
             name={name}
             label={info ? info.label : LABELS[name]}
-            detail={info ? info.detail : DETAILS[name]}
+            detail={name === "chair" ? (seated ? "click to stand up" : "click to sit down") : info ? info.detail : DETAILS[name]}
             infoOnly={Boolean(info)}
             labelOffset={LABEL_OFFSETS[name]}
             position={position}
@@ -272,6 +273,8 @@ export default function Experience({
   hovered = null,
   active = null,
   mobile = false,
+  seated = false,
+  doorOpen = false,
   onHover,
   onSelect,
   onArrive,
@@ -285,8 +288,8 @@ export default function Experience({
   const [compiled, setCompiled] = useState(false);
   const onCompiled = useCallback(() => setCompiled(true), []);
   const context = useMemo(
-    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute, hour }),
-    [theme, lightsOn, sky, reducedMotion, weather, minute, hour],
+    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute, hour, doorOpen }),
+    [theme, lightsOn, sky, reducedMotion, weather, minute, hour, doorOpen],
   );
   const interaction = useMemo(
     () => ({ hovered, active, setHovered: onHover ?? (() => {}), select: onSelect ?? (() => {}) }),
@@ -318,9 +321,9 @@ export default function Experience({
           <Atmosphere />
           <Room />
           <Desk />
-          <Objects hovered={hovered} active={active} />
+          <Objects hovered={hovered} active={active} seated={seated} />
           <ShadowSetup sky={sky} lightsOn={lightsOn} />
-          <CameraRig active={active} onArrive={onArrive} fixed={mobile} />
+          <CameraRig active={active} onArrive={onArrive} fixed={mobile} seated={seated} />
           <OverlayTracker />
           <WarmUp onCompiled={onCompiled} />
           {compiled && <Ready onReady={onReady} />}

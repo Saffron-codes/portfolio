@@ -4,6 +4,9 @@ import { anchors } from "./registry";
 /** Default view: standing just behind and above the chair. */
 export const DEFAULT_POSE = { position: [0, 1.33, 1.65], target: [0.05, 1.0, -0.2] };
 
+/** Sitting in the chair: eyes at the chair, looking at the monitor. */
+export const SEATED_POSE = { position: [0, 1.17, 0.6], target: [-0.05, 1.02, -0.17] };
+
 /** Phones: a fixed view framed tighter on the desk (no orbit, so it never fights scrolling). */
 export const MOBILE_POSE = { position: [0.08, 1.38, 0.95], target: [0.08, 0.92, -0.15] };
 

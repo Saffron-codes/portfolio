@@ -14,6 +14,8 @@ export const SECTIONS = [
 export const ACTIONS = [
   { object: "resumeSheet", label: "Download resume" },
   { object: "switchboard", label: "Lights" },
+  { object: "chair", label: "Office chair" },
+  { object: "door", label: "Door" },
 ];
 
 /** A second line under the hover label for objects that are real products on the desk. */
@@ -35,7 +37,7 @@ export const INFO = {
 };
 
 /** Tab order for the accessible button list. */
-export const TAB_ORDER = [...SECTIONS.map((s) => s.object), "resumeSheet", "switchboard"];
+export const TAB_ORDER = [...SECTIONS.map((s) => s.object), "resumeSheet", "switchboard", "chair", "door"];
 
 export const LABELS = Object.fromEntries([...SECTIONS, ...ACTIONS].map((entry) => [entry.object, entry.label]));
 

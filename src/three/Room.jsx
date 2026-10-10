@@ -6,7 +6,9 @@ import Interactive from "./Interactive";
 import PanelAnchor from "./PanelAnchor";
 import { LABELS } from "./sections";
 import { makeNetTexture } from "./textures";
-import { Bed, CeilingFan, ClothesHanger, ConcreteShelf, Curtains, Door, RoadSide, SwitchPanel, TubeLight } from "./RoomExtras";
+import { Bed, CeilingFan, ClothesHanger, ConcreteShelf, Curtains, Door, DOOR, HallBeyond, RoadSide, SwitchPanel, TubeLight } from "./RoomExtras";
+import { useScene } from "./SceneContext";
+import { LABELS as ALL_LABELS } from "./sections";
 
 const WALL = { color: "#e9e6ae", roughness: 0.95 };
 const WALL_T = 0.1;
@@ -138,6 +140,8 @@ export function WindowUnit({ width, height, panes = 3, columns = 9, rows = 8 }) 
 /** Walls, floor, both windows and everything fixed to the room. */
 export default function Room() {
   const floorTexture = useFloorTexture();
+  const { doorOpen } = useScene();
+  const doorZ1 = DOOR.z0 + DOOR.width;
 
   return (
     <group>
@@ -163,8 +167,11 @@ export default function Room() {
       <Wall size={[WALL_T, LEFT_WINDOW.y0, LWW]} position={[LEFT_WALL_X - WALL_T / 2, LEFT_WINDOW.y0 / 2, LWCZ]} />
       <Wall size={[WALL_T, ROOM_H - LEFT_WINDOW.y1, LWW]} position={[LEFT_WALL_X - WALL_T / 2, (ROOM_H + LEFT_WINDOW.y1) / 2, LWCZ]} />
 
-      {/* Right wall and the wall behind the chair */}
-      <Wall size={[WALL_T, ROOM_H, ROOM_D]} position={[ROOM_X1 + WALL_T / 2, ROOM_H / 2, ROOM_CZ]} />
+      {/* Right wall, built around the door opening; the wall behind the chair */}
+      <Wall size={[WALL_T, ROOM_H, DOOR.z0 - BACK_WALL_Z]} position={[ROOM_X1 + WALL_T / 2, ROOM_H / 2, (BACK_WALL_Z + DOOR.z0) / 2]} />
+      <Wall size={[WALL_T, ROOM_H, ROOM_Z1 - doorZ1]} position={[ROOM_X1 + WALL_T / 2, ROOM_H / 2, (doorZ1 + ROOM_Z1) / 2]} />
+      <Wall size={[WALL_T, ROOM_H - DOOR.height, DOOR.width]} position={[ROOM_X1 + WALL_T / 2, (ROOM_H + DOOR.height) / 2, DOOR.z0 + DOOR.width / 2]} />
+      <HallBeyond x={ROOM_X1 + WALL_T} z0={BACK_WALL_Z} z1={ROOM_Z1} />
       <Wall size={[ROOM_W, ROOM_H, WALL_T]} position={[ROOM_CX, ROOM_H / 2, ROOM_Z1 + WALL_T / 2]} />
 
       {/* Cable running down beside the window, and the hook the certificate hangs from */}
@@ -192,11 +199,13 @@ export default function Room() {
       <Curtains position={[LEFT_WALL_X + 0.03, LWCY, LWCZ]} width={LWW + 0.3} height={LWH + 0.3} />
       <RoadSide />
 
-      {/* Right side of the room: door, switches and sockets, the concrete shelf, the bed */}
-      <Door position={[ROOM_X1, 0, 0.55]} />
-      <SwitchPanel position={[ROOM_X1, 1.25, 1.2]} />
-      <ConcreteShelf position={[ROOM_X1, 0, 1.95]} />
-      <Bed position={[ROOM_X1 - 0.48, 0, ROOM_Z1 - 1.0]} />
+      {/* Right side of the room: door (click to open), switches and sockets, the concrete shelf to the inner corner, the bed */}
+      <Interactive name="door" label={ALL_LABELS.door} detail={doorOpen ? "click to close" : "click to open"} labelOffset={[ROOM_X1 - 0.2, 2.3, DOOR.z0 + DOOR.width / 2]}>
+        <Door position={[ROOM_X1, 0, DOOR.z0]} open={doorOpen} />
+      </Interactive>
+      <SwitchPanel position={[ROOM_X1, 1.25, doorZ1 + 0.32]} />
+      <ConcreteShelf position={[ROOM_X1, 0, ROOM_Z1 - 0.68]} />
+      <Bed position={[ROOM_X1 - 0.34 - 0.95, 0, ROOM_Z1 - 0.77]} />
 
       {/* Clothes hooks beside the window, on the back wall */}
       <ClothesHanger position={[1.9, 1.78, BACK_WALL_Z]} />

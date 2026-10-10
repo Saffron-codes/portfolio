@@ -74,6 +74,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const [arrived, setArrived] = useState(null);
   const [hintSeen, setHintSeen] = useState(readHintSeen);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [seated, setSeated] = useState(false);
+  const [doorOpen, setDoorOpen] = useState(false);
   const buttonRefs = useRef({});
   const panelRef = useRef(null);
   const lastObject = useRef(null);
@@ -129,6 +131,14 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         downloadResume();
         return;
       }
+      if (object === "chair") {
+        setSeated((s) => !s);
+        return;
+      }
+      if (object === "door") {
+        setDoorOpen((d) => !d);
+        return;
+      }
       const target = sectionForObject(object);
       if (target) openSection(target.id);
     },
@@ -168,6 +178,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
       if (event.key === "Escape") {
         if (helpOpen) setHelpOpen(false);
         else if (section) goBack();
+        else if (seated) setSeated(false);
         return;
       }
       if (event.key === "?") {
@@ -183,7 +194,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [section, helpOpen, goBack, onShowPlain, openSection]);
+  }, [section, helpOpen, seated, goBack, onShowPlain, openSection]);
 
   const PanelContent = panel?.Component;
 
@@ -203,6 +214,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
                 hovered={hovered}
                 active={isMobile ? null : active}
                 mobile={isMobile}
+                seated={seated && !isMobile}
+                doorOpen={doorOpen}
                 onHover={setHovered}
                 onSelect={select}
                 onArrive={onArrive}
@@ -256,6 +269,11 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         {section && !isMobile && (
           <button type="button" onClick={goBack} className={chromeButton}>
             <FaArrowLeft size={13} aria-hidden="true" /> Back to desk
+          </button>
+        )}
+        {!section && seated && !isMobile && (
+          <button type="button" onClick={() => setSeated(false)} className={chromeButton}>
+            <FaArrowLeft size={13} aria-hidden="true" /> Stand up
           </button>
         )}
       </div>
@@ -321,6 +339,14 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
               ? isDark
                 ? "Turn the lights on (switchboard)"
                 : "Turn the lights off (switchboard)"
+              : object === "chair"
+                ? seated
+                  ? "Stand up (chair)"
+                  : "Sit down (chair)"
+                : object === "door"
+                  ? doorOpen
+                    ? "Close the door"
+                    : "Open the door"
               : object === "resumeSheet"
                 ? "Download resume (printed sheet)"
                 : `Open ${LABELS[object].toLowerCase()} (${object === "window" ? "window" : object.replace(/([A-Z])/g, " $1").toLowerCase()})`}

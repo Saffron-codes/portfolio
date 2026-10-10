@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { CameraControls } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
-import { DEFAULT_POSE, MOBILE_POSE, poseFor } from "./focus";
+import { DEFAULT_POSE, MOBILE_POSE, SEATED_POSE, poseFor } from "./focus";
 import { useScene } from "./SceneContext";
 
 const deg = (d) => (d * Math.PI) / 180;
@@ -83,7 +83,7 @@ function applyLimits(controls, relaxed) {
  * flies to that object's panel (~1.2 s, instant with reduced motion) and locks input; on
  * `active = null` flies back. Calls onArrive(name) when a flight settles.
  */
-export default function CameraRig({ active, onArrive, fixed = false }) {
+export default function CameraRig({ active, onArrive, fixed = false, seated = false }) {
   const ref = useRef(null);
   const idle = useRef({ lastInput: 0, drift: 0 });
   const { reducedMotion } = useScene();
@@ -111,7 +111,7 @@ export default function CameraRig({ active, onArrive, fixed = false }) {
     const animate = !reducedMotion;
     controls.smoothTime = animate ? 0.55 : 0;
 
-    const pose = active ? poseFor(active) : lookPose(fixed ? MOBILE_POSE : DEFAULT_POSE);
+    const pose = active ? poseFor(active) : lookPose(fixed ? MOBILE_POSE : seated ? SEATED_POSE : DEFAULT_POSE);
     if (!pose) return undefined;
 
     applyLimits(controls, Boolean(active));
@@ -127,7 +127,7 @@ export default function CameraRig({ active, onArrive, fixed = false }) {
     return () => {
       cancelled = true;
     };
-  }, [active, reducedMotion, onArrive, fixed]);
+  }, [active, reducedMotion, onArrive, fixed, seated]);
 
   // Idle drift: a very slow sway of the view after 5 s without interaction.
   useEffect(() => {
