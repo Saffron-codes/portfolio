@@ -2,16 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Saffron Dionysius</title>
-    <link rel="icon" type="image/x-icon" href="./public/assets/favicon.jpg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Saffron Dionysius T, Software Engineer</title>
+    <meta
+      name="description"
+      content="Software Engineer with 3 years of experience building cross-platform mobile apps in Flutter and Dart, with FastAPI backends on PostgreSQL and Supabase. Based in Chennai, India."
+    />
+    <link rel="canonical" href="https://sddev.netlify.app/" />
+    <link rel="icon" type="image/jpeg" href="/assets/favicon.jpg" />
+    <meta name="theme-color" content="#F7F1E6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121726" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sddev.netlify.app" />
+    <meta property="og:title" content="Saffron Dionysius T, Software Engineer" />
+    <meta
+      property="og:description"
+      content="Software Engineer building cross-platform mobile apps in Flutter and Dart, with FastAPI backends on PostgreSQL and Supabase. Based in Chennai, India."
+    />
+    <meta property="og:image" content="https://sddev.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Illustration of Saffron's desk: a monitor, laptop, keyboard and phone in a cozy room." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@sdionysius" />
+    <meta name="twitter:title" content="Saffron Dionysius T, Software Engineer" />
+    <meta
+      name="twitter:description"
+      content="Software Engineer building cross-platform mobile apps in Flutter and Dart, with FastAPI backends on PostgreSQL and Supabase. Based in Chennai, India."
+    />
+    <meta name="twitter:image" content="https://sddev.netlify.app/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Apply the saved/system theme before first paint to avoid a flash. -->
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t !== "dark" && t !== "light") {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        if (t === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
   </head>
   <body>
-    <div id="root" class="scroll-smooth"></div>
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

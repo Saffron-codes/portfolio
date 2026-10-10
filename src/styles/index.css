@@ -1,3 +1,127 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  body {
+    @apply bg-cream text-ink antialiased dark:bg-night-900 dark:text-cream;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-sage-600 ring-offset-2 ring-offset-cream dark:ring-sage-400 dark:ring-offset-night-900;
+  }
+}
+
+/* ---- Desk scene palette. Light = lamp on; dark = lamp off, lit by screens and window. ---- */
+@layer base {
+  :root {
+    --sc-wall: #f1e6d4;
+    --sc-wall-2: #d8c4a6;
+    --sc-floor: #b6875f;
+    --sc-floor-2: #9d7250;
+    --sc-rug: #86aa9c;
+    --sc-rug-2: #6e9486;
+    --sc-wood-light: #cba37b;
+    --sc-wood: #a6774c;
+    --sc-wood-dark: #74502f;
+    --sc-frame: #f8f3ea;
+    --sc-frame-dark: #8a6a4b;
+    --sc-curtain: #93b8aa;
+    --sc-device: #dad6cf;
+    --sc-device-2: #bfbab1;
+    --sc-device-dark: #3e4047;
+    --sc-key: #efeae1;
+    --sc-paper: #fffdf8;
+    --sc-paper-line: #d9d2c4;
+    --sc-ink: #3b332e;
+    --sc-accent: #4f7f72;
+    --sc-amber: #f2b45a;
+    --sc-neon: #ff7bac;
+    --sc-neon-2: #4fd8c4;
+    --sc-neon-glow: 0.45;
+    --sc-lamp-on: 1;
+    --sc-screen-glow: 0.12;
+    --sc-window-glow: 0;
+    --sc-shadow: rgba(80, 50, 20, 0.16);
+    --sc-mug: #d98c6b;
+    --sc-mug-2: #b86f52;
+    --sc-notebook: #3f5c7a;
+    --sc-notebook-2: #2f465e;
+    --sc-pot: #c8795a;
+    --sc-pot-2: #a35f45;
+    --sc-leaf: #5e9a6b;
+    --sc-leaf-2: #3f7a52;
+    --sc-cat: #e8a56a;
+    --sc-cat-2: #c98448;
+    --sc-skyline: #5c7a9a;
+    --sc-highlight: rgba(255, 255, 255, 0.4);
+    --sc-vignette: 0.25;
+    --sc-steam: rgba(255, 255, 255, 0.7);
+  }
+  .dark {
+    --sc-wall: #1a2036;
+    --sc-wall-2: #0c1020;
+    --sc-floor: #26233a;
+    --sc-floor-2: #1d1b2e;
+    --sc-rug: #2f4553;
+    --sc-rug-2: #273a46;
+    --sc-wood-light: #6a4f3a;
+    --sc-wood: #4e3a2b;
+    --sc-wood-dark: #35281e;
+    --sc-frame: #3b4260;
+    --sc-frame-dark: #2a2f48;
+    --sc-curtain: #2e4a52;
+    --sc-device: #4a5068;
+    --sc-device-2: #3a3f54;
+    --sc-device-dark: #22242e;
+    --sc-key: #5a6078;
+    --sc-paper: #c9c4b8;
+    --sc-paper-line: #a9a498;
+    --sc-ink: #1f1f27;
+    --sc-accent: #6fb2a0;
+    --sc-amber: #f2b45a;
+    --sc-neon: #ff7bac;
+    --sc-neon-2: #4fd8c4;
+    --sc-neon-glow: 1;
+    --sc-lamp-on: 0;
+    --sc-screen-glow: 0.75;
+    --sc-window-glow: 0.45;
+    --sc-shadow: rgba(0, 0, 0, 0.45);
+    --sc-mug: #8b5a4a;
+    --sc-mug-2: #6e463a;
+    --sc-notebook: #2c3e55;
+    --sc-notebook-2: #1f2d3f;
+    --sc-pot: #7a4b3c;
+    --sc-pot-2: #5e3a2e;
+    --sc-leaf: #3f6f50;
+    --sc-leaf-2: #2e5540;
+    --sc-cat: #a77a52;
+    --sc-cat-2: #86613e;
+    --sc-skyline: #0b1326;
+    --sc-highlight: rgba(255, 255, 255, 0.08);
+    --sc-vignette: 0.55;
+    --sc-steam: rgba(255, 255, 255, 0.35);
+  }
+}
+
+/* Smooth colour change when the lamp (theme) toggles. */
+.scene * {
+  transition:
+    fill 450ms ease,
+    stroke 450ms ease,
+    stop-color 450ms ease,
+    opacity 450ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene * {
+    transition: none;
+  }
+}
