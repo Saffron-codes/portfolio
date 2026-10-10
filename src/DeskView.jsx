@@ -7,6 +7,9 @@ import { useSky } from "./three/useSky";
 import { useChennaiWeather } from "./three/useChennaiWeather";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { useHashRoute } from "./hooks/useHashRoute";
+import { MOBILE_QUERY, useMediaQuery } from "./hooks/useMediaQuery";
+import MobileSheet from "./components/MobileSheet";
+import MobileDock from "./components/MobileDock";
 import { overlay } from "./three/registry";
 import { LABELS, SECTIONS, sectionById, sectionForObject, TAB_ORDER } from "./three/sections";
 import { keyboardEvents, labelForKey } from "./three/keyboardStore";
@@ -17,6 +20,18 @@ import profile from "./data/profile";
 const Experience = lazy(() => import("./three/Experience"));
 
 const HINT_KEY = "desk-hint-seen";
+
+/** Sheet header tone per section, echoing the object it lives on. */
+const SHEET_TONES = {
+  projects: "desktop",
+  experience: "editor",
+  skills: "night",
+  contact: "phone",
+  about: "paper",
+  deskpulse: "cream",
+  education: "paper",
+  chennai: "night",
+};
 
 const chromeButton =
   "inline-flex items-center gap-2 rounded-full border border-ink/15 bg-cream/80 px-3.5 py-1.5 text-sm font-medium text-ink shadow-sm backdrop-blur transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:border-cream/15 dark:bg-night-800/80 dark:text-cream dark:hover:bg-night-800";
@@ -46,6 +61,9 @@ function downloadResume() {
 export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const isDark = theme === "dark";
   const reducedMotion = useReducedMotion();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  // Dev: `?og=1` hides every overlay so the default view can be captured for og-image.png.
+  const ogCapture = import.meta.env.DEV && new URLSearchParams(window.location.search).get("og") === "1";
   const supports3D = useMemo(detect3DSupport, []);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
@@ -69,7 +87,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const section = sectionById(hash);
   const active = section?.object ?? null;
   const panel = section ? PANELS[section.id] : null;
-  const panelVisible = Boolean(section && (use3D ? arrived === active : true));
+  // Desktop waits for the camera to arrive; phones and the 2D fallback show the section at once.
+  const panelVisible = Boolean(section && (use3D && !isMobile ? arrived === active : true));
 
   // Unmount the SVG once the crossfade has finished.
   useEffect(() => {
@@ -181,7 +200,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
                 weather={weather}
                 reducedMotion={reducedMotion}
                 hovered={hovered}
-                active={active}
+                active={isMobile ? null : active}
+                mobile={isMobile}
                 onHover={setHovered}
                 onSelect={select}
                 onArrive={onArrive}
@@ -201,8 +221,15 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         </div>
       )}
 
-      {/* Section panel, pinned to the object's screen by OverlayTracker (3D) or centred (fallback). */}
-      {panel && (
+      {/* Section panel: pinned to the object's screen (desktop 3D), centred (2D fallback), or a full-screen sheet (phones). */}
+      {panel && isMobile && (
+        <MobileSheet title={section.label} tone={SHEET_TONES[section.id]} onClose={goBack}>
+          <section ref={panelRef} tabIndex={-1} aria-label={section.label} className="min-h-full focus:outline-none focus-visible:ring-0">
+            <PanelContent onShowPlain={onShowPlain} weather={weather} />
+          </section>
+        </MobileSheet>
+      )}
+      {panel && !isMobile && (
         <div
           ref={(el) => {
             overlay.el = el;
@@ -222,8 +249,10 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
       )}
 
       {/* Chrome */}
+      {!ogCapture && (
+      <>
       <div className="absolute left-4 top-4 sm:left-6 sm:top-5">
-        {section && (
+        {section && !isMobile && (
           <button type="button" onClick={goBack} className={chromeButton}>
             <FaArrowLeft size={13} aria-hidden="true" /> Back to desk
           </button>
@@ -261,12 +290,15 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
       )}
 
       {!hintSeen && !section && (
-        <p className="pointer-events-none absolute bottom-4 left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70">
-          Click anything on the desk ✨
+        <p className={`pointer-events-none absolute left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70 ${isMobile ? "bottom-20" : "bottom-4"}`}>
+          {isMobile ? "Tap anything on the desk ✨" : "Click anything on the desk ✨"}
         </p>
       )}
 
+      {isMobile && <MobileDock onSelect={select} activeObject={active} isDark={isDark} buttonRefs={buttonRefs} />}
+
       {/* Accessible list of the desk objects: canvas objects cannot receive focus themselves. */}
+      {!isMobile && (
       <nav aria-label="Desk objects" className="absolute bottom-4 left-4 flex flex-wrap gap-1">
         {TAB_ORDER.map((object) => (
           <button
@@ -290,6 +322,9 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
           </button>
         ))}
       </nav>
+      )}
+      </>
+      )}
     </div>
   );
 }

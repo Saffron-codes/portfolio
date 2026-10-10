@@ -5,13 +5,13 @@ export const EDUCATION_DESIGN = { width: 1000, height: 708 };
 /** Rendered on the certificate frame: the graduation photo and both entries. */
 export default function EducationCard() {
   return (
-    <div className="flex h-full w-full gap-8 bg-[#f7f1e2] p-8 text-ink ring-4 ring-inset ring-[#8a7a52]">
+    <div className="flex h-full w-full flex-col gap-6 bg-[#f7f1e2] p-6 text-ink ring-4 ring-inset ring-[#8a7a52] sm:flex-row sm:gap-8 sm:p-8">
       <img
         src={educationMedia.graduationPhoto}
         alt={educationMedia.graduationAlt}
         loading="lazy"
         decoding="async"
-        className="h-full w-[38%] shrink-0 rounded-lg object-cover shadow-md"
+        className="max-h-72 w-full shrink-0 rounded-lg object-cover shadow-md sm:max-h-none sm:h-full sm:w-[38%]"
       />
       <div className="flex min-w-0 flex-1 flex-col justify-center">
         <p className="text-lg uppercase tracking-[0.35em] text-ink/60">Education</p>

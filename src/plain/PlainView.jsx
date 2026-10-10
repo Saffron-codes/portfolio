@@ -105,7 +105,7 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
             <FaLocationDot size={13} aria-hidden="true" />
             {profile.location}
           </p>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/85 dark:text-cream/85">
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/80 dark:text-cream/80">
             {profile.bio}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
                   <p className="text-sm text-ink/70 dark:text-cream/70">
                     {job.company} · {job.location}
                   </p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink/85 dark:text-cream/85">
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink/80 dark:text-cream/80">
                     {job.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
                     ))}
@@ -184,7 +184,7 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
                 <div>
                   <h3 className="text-lg font-semibold">{item.degree}</h3>
                   <p className="text-sm text-ink/70 dark:text-cream/70">{item.school}</p>
-                  {item.detail && <p className="mt-1 text-sm text-ink/85 dark:text-cream/85">{item.detail}</p>}
+                  {item.detail && <p className="mt-1 text-sm text-ink/80 dark:text-cream/80">{item.detail}</p>}
                 </div>
               </li>
             ))}
@@ -202,7 +202,7 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
         </Section>
 
         <Section id="contact" title="Contact">
-          <p className="max-w-2xl text-base leading-relaxed text-ink/85 dark:text-cream/85">
+          <p className="max-w-2xl text-base leading-relaxed text-ink/80 dark:text-cream/80">
             Open to freelance and full-time software engineering roles. The fastest way to reach me is email.
           </p>
           <ul className="mt-5 flex flex-wrap gap-2">

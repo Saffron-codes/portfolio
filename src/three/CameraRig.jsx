@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { CameraControls } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
-import { DEFAULT_POSE, poseFor } from "./focus";
+import { DEFAULT_POSE, MOBILE_POSE, poseFor } from "./focus";
 import { useScene } from "./SceneContext";
 
 const deg = (d) => (d * Math.PI) / 180;
@@ -64,7 +64,7 @@ function applyLimits(controls, relaxed) {
  * flies to that object's panel (~1.2 s, instant with reduced motion) and locks input; on
  * `active = null` flies back. Calls onArrive(name) when a flight settles.
  */
-export default function CameraRig({ active, onArrive }) {
+export default function CameraRig({ active, onArrive, fixed = false }) {
   const ref = useRef(null);
   const idle = useRef({ lastInput: 0, drift: 0 });
   const { reducedMotion } = useScene();
@@ -91,11 +91,11 @@ export default function CameraRig({ active, onArrive }) {
     const animate = !reducedMotion;
     controls.smoothTime = animate ? 0.55 : 0;
 
-    const pose = active ? poseFor(active) : DEFAULT_POSE;
+    const pose = active ? poseFor(active) : fixed ? MOBILE_POSE : DEFAULT_POSE;
     if (!pose) return undefined;
 
     applyLimits(controls, Boolean(active));
-    lockInput(controls, Boolean(active));
+    lockInput(controls, Boolean(active) || fixed);
     const flight = controls.setLookAt(...pose.position, ...pose.target, animate);
     Promise.resolve(flight).then(() => {
       if (cancelled) return;
@@ -107,7 +107,7 @@ export default function CameraRig({ active, onArrive }) {
     return () => {
       cancelled = true;
     };
-  }, [active, reducedMotion, onArrive]);
+  }, [active, reducedMotion, onArrive, fixed]);
 
   // Idle drift: a very slow sway of the view after 5 s without interaction.
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function CameraRig({ active, onArrive }) {
   }, []);
   useFrame(({ clock }) => {
     const controls = ref.current;
-    if (!controls || reducedMotion || active) return;
+    if (!controls || reducedMotion || active || fixed) return;
     const now = performance.now() / 1000;
     if (now - idle.current.lastInput < 5) return;
     const target = Math.sin(clock.getElapsedTime() * 0.12) * 0.035;

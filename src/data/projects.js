@@ -11,7 +11,7 @@ const projects = [
       { label: "Website", url: "https://svik.netlify.app/" },
       { label: "GitHub", url: "https://github.com/svikapp/svik" },
     ],
-    image: "/assets/svik.jpg",
+    image: "/assets/svik.webp",
     badge: "In development",
   },
   {
@@ -21,7 +21,7 @@ const projects = [
       "AI-powered tool that generates small to intermediate electronic circuits from text prompts.",
     stack: ["PostgreSQL", "Express.js", "React", "Node.js", "OpenAI GPT"],
     links: [{ label: "Live", url: "https://acb-u0bu.onrender.com/" }],
-    image: "/assets/ai-circuit-builder.png",
+    image: "/assets/ai-circuit-builder.webp",
   },
   {
     id: "note-warden",
@@ -41,7 +41,7 @@ const projects = [
     // TODO: confirm the real stack for Deskpulse.
     stack: ["Embedded", "IoT"],
     links: [{ label: "GitHub", url: "https://github.com/Saffron-codes/deskpulse" }],
-    image: "/assets/deskpulse.jpg",
+    image: "/assets/deskpulse.webp",
   },
   {
     id: "love-calculator",
@@ -50,7 +50,7 @@ const projects = [
       "Simple Flutter app that calculates a love percentage between two names.",
     stack: ["Flutter", "Dart"],
     links: [{ label: "GitHub", url: "https://github.com/Saffron-codes/love_calculator_app" }],
-    image: "/assets/love_calculator.png",
+    image: "/assets/love_calculator.webp",
   },
 ];
 

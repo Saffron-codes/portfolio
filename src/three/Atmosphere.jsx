@@ -4,9 +4,9 @@ import { useFrame } from "@react-three/fiber";
 import { useScene } from "./SceneContext";
 import { seeded } from "./textures";
 
-const COUNT = 180;
+const COUNT = 140;
 // A slanted box from the window down toward the desk: where the sunbeam lives.
-const BOX = { x: [-0.1, 1.25], y: [0.78, 1.95], z: [-0.3, 0.45] };
+const BOX = { x: [0.3, 1.25], y: [0.85, 1.9], z: [-0.28, 0.4] };
 
 /** Faint dust motes drifting in the window light by day (clear or cloudy, motion allowed). */
 export default function Atmosphere() {
@@ -47,7 +47,7 @@ export default function Atmosphere() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[motes.positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.007} color="#fff1cf" transparent opacity={lightsOn ? 0.35 : 0.55} depthWrite={false} sizeAttenuation />
+      <pointsMaterial size={0.005} color="#fff1cf" transparent opacity={lightsOn ? 0.22 : 0.4} depthWrite={false} sizeAttenuation />
     </points>
   );
 }

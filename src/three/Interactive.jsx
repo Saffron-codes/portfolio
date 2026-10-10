@@ -52,7 +52,7 @@ export default function Interactive({ name, label, labelOffset = [0, 0.3, 0], ch
       {children}
       {isHovered && (
         <Html position={labelOffset} center zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
-          <div className="whitespace-nowrap rounded-full bg-ink/85 px-3 py-1 text-sm font-medium text-cream shadow-lg backdrop-blur dark:bg-cream/90 dark:text-ink">
+          <div className="whitespace-nowrap rounded-full bg-ink/80 px-3 py-1 text-sm font-medium text-cream shadow-lg backdrop-blur dark:bg-cream/90 dark:text-ink">
             {label}
           </div>
         </Html>

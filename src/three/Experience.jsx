@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer, PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
 import Room from "./Room";
 import Backdrop from "./Backdrop";
@@ -187,6 +187,28 @@ function Objects({ hovered, active }) {
   );
 }
 
+/**
+ * Compiles every material's shader program off the critical path (KHR_parallel_shader_compile
+ * where available) before the render loop starts, so the first frames don't block the main thread.
+ */
+function WarmUp({ onCompiled }) {
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const camera = useThree((state) => state.camera);
+  useEffect(() => {
+    let cancelled = false;
+    const done = () => {
+      if (!cancelled) onCompiled();
+    };
+    if (typeof gl.compileAsync === "function") gl.compileAsync(scene, camera).then(done, done);
+    else done();
+    return () => {
+      cancelled = true;
+    };
+  }, [gl, scene, camera, onCompiled]);
+  return null;
+}
+
 /** Calls onReady once the scene has actually rendered a couple of frames. */
 function Ready({ onReady }) {
   useEffect(() => {
@@ -227,6 +249,7 @@ export default function Experience({
   paused = false,
   hovered = null,
   active = null,
+  mobile = false,
   onHover,
   onSelect,
   onArrive,
@@ -234,6 +257,11 @@ export default function Experience({
 }) {
   const visible = useTabVisible();
   const lightsOn = theme !== "dark";
+  // Pixel ratio: start high, let PerformanceMonitor drop it on slow devices.
+  const [dpr, setDpr] = useState(mobile ? 1.5 : 1.75);
+  // The loop stays off until shaders are compiled; the 2D scene covers the wait.
+  const [compiled, setCompiled] = useState(false);
+  const onCompiled = useCallback(() => setCompiled(true), []);
   const context = useMemo(
     () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute }),
     [theme, lightsOn, sky, reducedMotion, weather, minute],
@@ -245,10 +273,10 @@ export default function Experience({
 
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      dpr={dpr}
       shadows="soft"
-      frameloop={visible && !paused ? "always" : "never"}
-      camera={{ fov: 42, near: 0.05, far: 60, position: DEFAULT_POSE.position }}
+      frameloop={compiled && visible && !paused ? "always" : "never"}
+      camera={{ fov: mobile ? 56 : 42, near: 0.05, far: 60, position: DEFAULT_POSE.position }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -258,6 +286,7 @@ export default function Experience({
     >
       <SceneContext.Provider value={context}>
         <InteractionContext.Provider value={interaction}>
+          <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(mobile ? 1.5 : 1.75)} flipflops={2} onFallback={() => setDpr(1)} />
           <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
           <Lights lightsOn={lightsOn} sky={sky} weather={weather} hour={hour} />
           <Exposure sky={sky} weather={weather} />
@@ -269,9 +298,10 @@ export default function Experience({
           <Desk />
           <Objects hovered={hovered} active={active} />
           <ShadowSetup sky={sky} lightsOn={lightsOn} />
-          <CameraRig active={active} onArrive={onArrive} />
+          <CameraRig active={active} onArrive={onArrive} fixed={mobile} />
           <OverlayTracker />
-          <Ready onReady={onReady} />
+          <WarmUp onCompiled={onCompiled} />
+          {compiled && <Ready onReady={onReady} />}
         </InteractionContext.Provider>
       </SceneContext.Provider>
     </Canvas>

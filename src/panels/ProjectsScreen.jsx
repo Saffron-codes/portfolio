@@ -12,7 +12,7 @@ export default function ProjectsScreen() {
         <span>{projects.length} windows open</span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {projects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}

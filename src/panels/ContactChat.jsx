@@ -10,7 +10,7 @@ const chip =
 /** Rendered on the phone: a Material-style chat with quick-reply links. */
 export default function ContactChat() {
   return (
-    <div className="flex h-full w-full flex-col bg-[#eef3f1] text-ink">
+    <div className="flex h-full min-h-full w-full flex-col bg-[#eef3f1] text-ink">
       <div className="flex items-center gap-3 bg-sage-600 px-5 pb-4 pt-8 text-white shadow">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/25 text-xl font-semibold" aria-hidden="true">
           S

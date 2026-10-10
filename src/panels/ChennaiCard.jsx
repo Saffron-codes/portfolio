@@ -21,9 +21,9 @@ export default function ChennaiCard({ weather }) {
   if (weather?.label) parts.push(weather.label);
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <div className="rounded-3xl bg-night-900/80 px-16 py-10 text-center text-cream shadow-2xl ring-1 ring-white/10 backdrop-blur">
+      <div className="rounded-3xl bg-night-900/80 px-8 py-8 text-center text-cream shadow-2xl ring-1 ring-white/10 backdrop-blur sm:px-16 sm:py-10">
         <p className="text-xl uppercase tracking-[0.3em] text-cream/60">Chennai now</p>
-        <p className="mt-3 text-6xl font-semibold">{parts.join(" · ")}</p>
+        <p className="mt-3 text-3xl font-semibold sm:text-6xl">{parts.join(" · ")}</p>
         <p className="mt-3 text-2xl text-cream/70">where I work</p>
       </div>
     </div>

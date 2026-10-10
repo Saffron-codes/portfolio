@@ -8,7 +8,7 @@ export default function DeskpulseCard() {
   const project = projects.find((p) => p.id === "deskpulse");
   return (
     <div className="flex h-full w-full items-stretch rounded-2xl bg-cream p-4 shadow-2xl ring-1 ring-ink/10">
-      <div className="grid w-full grid-cols-[1fr_1.1fr] gap-4">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-[1fr_1.1fr]">
         <div className="flex flex-col justify-center gap-3 pl-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sage-700">On the desk</p>
           <h2 className="text-3xl font-bold leading-tight text-ink">Deskpulse</h2>
