@@ -11,8 +11,7 @@ const projects = [
       { label: "GitHub", url: "https://github.com/Saffron-codes/nomad" },
       { label: "Download", url: "https://github.com/Saffron-codes/nomad/releases/tag/v1.0.0" },
     ],
-    // Add public/assets/nomad.webp, then set: image: "/assets/nomad.webp"
-    image: null,
+    image: "/assets/nomad.webp",
     badge: "v1.0.0",
   },
   {
