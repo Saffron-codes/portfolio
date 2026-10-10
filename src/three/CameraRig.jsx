@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { CameraControls } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { DEFAULT_POSE, poseFor } from "./focus";
@@ -31,6 +31,25 @@ function lockInput(controls, locked) {
   Object.assign(controls.touches, touches);
 }
 
+/**
+ * camera-controls' setLookAt normalises the azimuth into [0, 2π). A view that sits slightly
+ * left of centre becomes ~6.26 rad, which the ±25° limits then clamp to +25° on the next
+ * rotate (user drag or idle drift). Wrap it back into [−π, π] after every setLookAt.
+ */
+function wrapAzimuth(controls) {
+  const end = controls._sphericalEnd;
+  const current = controls._spherical;
+  if (!end || !current) return;
+  while (end.theta > Math.PI) {
+    end.theta -= Math.PI * 2;
+    current.theta -= Math.PI * 2;
+  }
+  while (end.theta < -Math.PI) {
+    end.theta += Math.PI * 2;
+    current.theta += Math.PI * 2;
+  }
+}
+
 function applyLimits(controls, relaxed) {
   controls.minAzimuthAngle = relaxed ? -Infinity : LIMITS.minAzimuthAngle;
   controls.maxAzimuthAngle = relaxed ? Infinity : LIMITS.maxAzimuthAngle;
@@ -47,6 +66,7 @@ function applyLimits(controls, relaxed) {
  */
 export default function CameraRig({ active, onArrive }) {
   const ref = useRef(null);
+  const idle = useRef({ lastInput: 0, drift: 0 });
   const { reducedMotion } = useScene();
   const scene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
@@ -55,6 +75,7 @@ export default function CameraRig({ active, onArrive }) {
     const controls = ref.current;
     if (!controls) return;
     controls.setLookAt(...DEFAULT_POSE.position, ...DEFAULT_POSE.target, false);
+    wrapAzimuth(controls);
     lockInput(controls, false);
     if (import.meta.env.DEV) {
       window.__cameraControls = controls;
@@ -78,13 +99,41 @@ export default function CameraRig({ active, onArrive }) {
     const flight = controls.setLookAt(...pose.position, ...pose.target, animate);
     Promise.resolve(flight).then(() => {
       if (cancelled) return;
+      wrapAzimuth(controls);
       controls.smoothTime = 0.4;
+      idle.current.drift = 0;
       onArrive?.(active ?? null);
     });
     return () => {
       cancelled = true;
     };
   }, [active, reducedMotion, onArrive]);
+
+  // Idle drift: a very slow sway of the view after 5 s without interaction.
+  useEffect(() => {
+    const controls = ref.current;
+    if (!controls) return undefined;
+    const mark = () => {
+      idle.current.lastInput = performance.now() / 1000;
+    };
+    controls.addEventListener("controlstart", mark);
+    controls.addEventListener("control", mark);
+    mark();
+    return () => {
+      controls.removeEventListener("controlstart", mark);
+      controls.removeEventListener("control", mark);
+    };
+  }, []);
+  useFrame(({ clock }) => {
+    const controls = ref.current;
+    if (!controls || reducedMotion || active) return;
+    const now = performance.now() / 1000;
+    if (now - idle.current.lastInput < 5) return;
+    const target = Math.sin(clock.getElapsedTime() * 0.12) * 0.035;
+    const delta = target - idle.current.drift;
+    idle.current.drift = target;
+    controls.rotate(delta, 0, false);
+  });
 
   return <CameraControls ref={ref} makeDefault {...LIMITS} truckSpeed={0} dollySpeed={0.4} smoothTime={0.4} />;
 }

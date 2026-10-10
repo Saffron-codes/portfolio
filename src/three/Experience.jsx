@@ -4,6 +4,9 @@ import { Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 import Room from "./Room";
 import Backdrop from "./Backdrop";
+import Weather from "./Weather";
+import Atmosphere from "./Atmosphere";
+import { CLEAR_WEATHER } from "./useChennaiWeather";
 import Desk from "./objects/Desk";
 import { OBJECT_COMPONENTS } from "./objects";
 import { DESK_TOP, OBJECTS } from "./layout";
@@ -78,18 +81,23 @@ function ShadowSetup({ sky, lightsOn }) {
   return null;
 }
 
-function Lights({ lightsOn, sky }) {
+/** How much the weather dims the sun. */
+const SUN_FACTOR = { clear: 1, cloudy: 0.55, fog: 0.45, rain: 0.35, thunderstorm: 0.3 };
+
+function Lights({ lightsOn, sky, weather }) {
   const sun = SUN[sky] ?? SUN.day;
   const isNight = sky === "night";
+  const factor = SUN_FACTOR[weather.state] ?? 1;
+  const sunColor = weather.state === "clear" ? sun.color : "#dfe6ee";
   return (
     <>
       <ambientLight intensity={lightsOn ? 0.45 : isNight ? 0.04 : 0.12} color={lightsOn ? "#fff4e0" : "#aab6d6"} />
       <hemisphereLight args={[isNight ? "#2b3a66" : "#dbeeff", "#8a4a35", lightsOn ? 0.35 : isNight ? 0.06 : 0.15]} />
-      <SunLight position={sun.position} intensity={sun.intensity} color={sun.color} />
+      <SunLight position={sun.position} intensity={sun.intensity * factor} color={sunColor} />
       {/* Room light (off in dark mode) */}
       {lightsOn && <pointLight position={[0.2, 2.45, 0.9]} intensity={2.2} distance={3.6} decay={1.3} color="#ffe6bf" />}
       {/* Screen and keyboard glow onto the desk when the room is dark */}
-      {!lightsOn && (
+      {(!lightsOn || isNight) && (
         <>
           <pointLight position={[-0.05, DESK_TOP + 0.3, 0.1]} intensity={0.5} distance={1.2} decay={2} color="#9fb6cc" />
           <pointLight position={[-0.12, DESK_TOP + 0.05, 0.15]} intensity={0.35} distance={0.6} decay={2} color="#6b7cff" />
@@ -175,6 +183,8 @@ function useTabVisible() {
 export default function Experience({
   theme = "light",
   sky = "day",
+  minute = 0,
+  weather = CLEAR_WEATHER,
   reducedMotion = false,
   paused = false,
   hovered = null,
@@ -187,8 +197,8 @@ export default function Experience({
   const visible = useTabVisible();
   const lightsOn = theme !== "dark";
   const context = useMemo(
-    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion }),
-    [theme, lightsOn, sky, reducedMotion],
+    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute }),
+    [theme, lightsOn, sky, reducedMotion, weather, minute],
   );
   const interaction = useMemo(
     () => ({ hovered, active, setHovered: onHover ?? (() => {}), select: onSelect ?? (() => {}) }),
@@ -211,9 +221,11 @@ export default function Experience({
       <SceneContext.Provider value={context}>
         <InteractionContext.Provider value={interaction}>
           <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
-          <Lights lightsOn={lightsOn} sky={sky} />
+          <Lights lightsOn={lightsOn} sky={sky} weather={weather} />
           <RoomEnvironment lightsOn={lightsOn} sky={sky} />
           <Backdrop />
+          <Weather />
+          <Atmosphere />
           <Room />
           <Desk />
           <Objects hovered={hovered} active={active} />

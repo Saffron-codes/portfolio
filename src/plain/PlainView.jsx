@@ -3,7 +3,7 @@ import profile from "../data/profile";
 import experience from "../data/experience";
 import projects from "../data/projects";
 import skills from "../data/skills";
-import education from "../data/education";
+import education, { educationMedia } from "../data/education";
 import ProjectCard from "../components/ProjectCard";
 import LinkIcon from "../components/LinkIcon";
 import { useReducedMotion } from "../hooks/useReducedMotion";
@@ -174,7 +174,8 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
         </Section>
 
         <Section id="education" title="Education">
-          <ol className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <ol className="flex flex-1 flex-col gap-6">
             {education.map((item) => (
               <li key={item.id} className="grid gap-1 sm:grid-cols-[9.5rem_1fr] sm:gap-6">
                 <p className="text-sm text-ink/60 dark:text-cream/60 sm:pt-0.5">
@@ -188,6 +189,16 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
               </li>
             ))}
           </ol>
+          <img
+            src={educationMedia.graduationPhoto}
+            alt={educationMedia.graduationAlt}
+            loading="lazy"
+            decoding="async"
+            width="768"
+            height="1024"
+            className="w-40 shrink-0 rounded-xl object-cover shadow-sm sm:w-44"
+          />
+          </div>
         </Section>
 
         <Section id="contact" title="Contact">

@@ -92,6 +92,15 @@ export default function Keyboard({ name, onSelect, hovered, active, ...props }) 
   const keyTop = CASE.height - 0.004;
   const instanceRefs = useRef([]);
   useKeyAnimation(instanceRefs, keyTop, active);
+  const { reducedMotion } = useScene();
+  const glow = useRef(null);
+  useFrame(({ clock }) => {
+    if (!glow.current || reducedMotion) return;
+    // Hue sweeps 0.5 (cyan) → 0.78 (purple) and back over ~10 s.
+    const hue = 0.5 + 0.28 * (0.5 + 0.5 * Math.sin(clock.getElapsedTime() * 0.6));
+    glow.current.color.setHSL(hue, 0.95, 0.62);
+    glow.current.emissive.copy(glow.current.color);
+  });
 
   return (
     <group name={name} {...props}>
@@ -102,7 +111,7 @@ export default function Keyboard({ name, onSelect, hovered, active, ...props }) 
       {/* RGB underglow: a glowing plate the keys sit on (colour cycles in Phase 6) */}
       <mesh position={[0, keyTop + 0.0005, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ noShadow: true }}>
         <planeGeometry args={[CASE.width - 0.012, CASE.depth - 0.012]} />
-        <meshStandardMaterial color="#5b6cff" emissive="#5b6cff" emissiveIntensity={lightsOn ? 1.2 : 2.2} roughness={1} />
+        <meshStandardMaterial ref={glow} color="#5b6cff" emissive="#5b6cff" emissiveIntensity={lightsOn ? 1.2 : 2.2} roughness={1} />
       </mesh>
       <Instances limit={KEYS.length} geometry={keycap} castShadow frustumCulled={false}>
         <meshStandardMaterial roughness={0.6} />

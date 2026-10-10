@@ -7,6 +7,8 @@ export const SceneContext = createContext({
   sky: "day",
   isNight: false,
   reducedMotion: false,
+  weather: { state: "clear", label: "clear", temperature: null, isDay: true },
+  minute: 0,
 });
 
 export function useScene() {

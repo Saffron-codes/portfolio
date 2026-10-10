@@ -26,9 +26,22 @@ const skyShader = {
     }`,
 };
 
-function Sky({ sky }) {
-  const material = useMemo(() => new THREE.ShaderMaterial({ ...skyShader, uniforms: THREE.UniformsUtils.clone(skyShader.uniforms) }), []);
+/** Greyer, flatter skies for cloud, rain and fog. */
+export function skyColorsFor(sky, state) {
   const [top, bottom] = SKY[sky] ?? SKY.day;
+  const grey = sky === "night" ? "#141a2a" : "#8f99a3";
+  const greyLight = sky === "night" ? "#232b40" : "#c7ced4";
+  const mix = (a, b, t) => `#${new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString()}`;
+  if (state === "cloudy") return [mix(top, grey, 0.45), mix(bottom, greyLight, 0.45)];
+  if (state === "rain") return [mix(top, grey, 0.8), mix(bottom, greyLight, 0.8)];
+  if (state === "thunderstorm") return [mix(top, grey, 0.9), mix(bottom, grey, 0.6)];
+  if (state === "fog") return [mix(top, greyLight, 0.7), mix(bottom, greyLight, 0.9)];
+  return [top, bottom];
+}
+
+function Sky({ sky, state }) {
+  const material = useMemo(() => new THREE.ShaderMaterial({ ...skyShader, uniforms: THREE.UniformsUtils.clone(skyShader.uniforms) }), []);
+  const [top, bottom] = skyColorsFor(sky, state);
   material.uniforms.top.value.set(top);
   material.uniforms.bottom.value.set(bottom);
   return (
@@ -100,10 +113,11 @@ function Tree({ position }) {
 
 /** Everything outside the window: sky, ground, tree, sunshade, moon and stars at night. */
 export default function Backdrop() {
-  const { sky, isNight } = useScene();
+  const { sky, isNight, weather } = useScene();
+  const overcast = weather.state !== "clear";
   return (
     <group>
-      <Sky sky={sky} />
+      <Sky sky={sky} state={weather.state} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -0.02, -4]} userData={{ noShadow: true }}>
         <planeGeometry args={[24, 10]} />
         <meshStandardMaterial color="#6f7d5a" roughness={1} />
@@ -120,7 +134,7 @@ export default function Backdrop() {
         <boxGeometry args={[2.0, 0.03, 1.1]} />
         <meshStandardMaterial color="#b94a52" roughness={0.8} />
       </mesh>
-      {isNight && (
+      {isNight && !overcast && (
         <group>
           <mesh position={[2.4, 2.5, -6.5]} userData={{ noShadow: true }}>
             <sphereGeometry args={[0.3, 24, 24]} />

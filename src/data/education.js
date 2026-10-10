@@ -18,3 +18,14 @@ const education = [
 ];
 
 export default education;
+
+/**
+ * Images for the Education section.
+ * - graduationPhoto: shown in the education panel and the plain view.
+ * - certificateImage: printed inside the wall frame. Swap for the certificate scan when ready.
+ */
+export const educationMedia = {
+  graduationPhoto: "/assets/graduation.webp",
+  graduationAlt: "Saffron in a graduation gown, holding the degree certificate",
+  certificateImage: "/assets/graduation.webp",
+};

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { makeDeskpulseScreen } from "../textures";
 import { getChennaiTime } from "../../lib/chennaiTime";
 import { useScene } from "../SceneContext";
@@ -15,8 +15,21 @@ function formatTime({ hour, minute }) {
 
 /** Deskpulse: wedge-shaped dark body with a ~3.5" screen showing a dashboard. */
 export default function Deskpulse({ name, onSelect, hovered, active, ...props }) {
-  const { lightsOn } = useScene();
-  const screen = useMemo(() => makeDeskpulseScreen({ time: formatTime(getChennaiTime()) }), []);
+  const { lightsOn, weather, minute } = useScene();
+  const screen = useMemo(
+    () =>
+      makeDeskpulseScreen({
+        time: formatTime(getChennaiTime()),
+        temperature: weather.temperature != null ? `${Math.round(weather.temperature)}°` : "--°",
+        condition: weather.label,
+        state: weather.state,
+        isDay: weather.isDay,
+      }),
+    // `minute` ticks every minute so the clock stays right.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [minute, weather],
+  );
+  useEffect(() => () => screen.dispose(), [screen]);
   return (
     <group name={name} {...props}>
       <mesh position={[0, 0.006, 0]} castShadow>

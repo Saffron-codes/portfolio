@@ -306,7 +306,74 @@ export function makeResumeSheet({ name, title }) {
 }
 
 /** Deskpulse dashboard. Static here; Phase 6 redraws it every minute with live data. */
-export function makeDeskpulseScreen({ time, temperature = "--°", condition = "clear" }) {
+function drawWeatherIcon(ctx, x, y, state, isDay) {
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  if (state === "clear" && isDay) {
+    ctx.fillStyle = "#f2b45a";
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#f2b45a";
+    for (let i = 0; i < 8; i += 1) {
+      const a = (i * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a) * 34, y + Math.sin(a) * 34);
+      ctx.lineTo(x + Math.cos(a) * 42, y + Math.sin(a) * 42);
+      ctx.stroke();
+    }
+  } else if (state === "clear") {
+    ctx.fillStyle = "#f5efd6";
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#0b0f17";
+    ctx.beginPath();
+    ctx.arc(x + 12, y - 8, 22, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Cloud base for cloudy / rain / thunder / fog
+    ctx.fillStyle = state === "fog" ? "#9aa3ad" : "#c7ced4";
+    ctx.beginPath();
+    ctx.arc(x - 14, y + 4, 16, 0, Math.PI * 2);
+    ctx.arc(x + 2, y - 8, 20, 0, Math.PI * 2);
+    ctx.arc(x + 18, y + 4, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(x - 14, y + 4, 32, 16);
+    if (state === "rain") {
+      ctx.strokeStyle = "#7fb3ff";
+      [-12, 0, 12].forEach((dx) => {
+        ctx.beginPath();
+        ctx.moveTo(x + dx, y + 28);
+        ctx.lineTo(x + dx - 4, y + 42);
+        ctx.stroke();
+      });
+    } else if (state === "thunderstorm") {
+      ctx.fillStyle = "#ffd54f";
+      ctx.beginPath();
+      ctx.moveTo(x + 4, y + 20);
+      ctx.lineTo(x - 8, y + 40);
+      ctx.lineTo(x + 2, y + 40);
+      ctx.lineTo(x - 4, y + 56);
+      ctx.lineTo(x + 12, y + 34);
+      ctx.lineTo(x + 2, y + 34);
+      ctx.closePath();
+      ctx.fill();
+    } else if (state === "fog") {
+      ctx.strokeStyle = "#c7ced4";
+      [30, 40, 50].forEach((dy, i) => {
+        ctx.beginPath();
+        ctx.moveTo(x - 26 + i * 4, y + dy);
+        ctx.lineTo(x + 26 - i * 4, y + dy);
+        ctx.stroke();
+      });
+    }
+  }
+  ctx.restore();
+}
+
+export function makeDeskpulseScreen({ time, temperature = "--°", condition = "clear", state = "clear", isDay = true }) {
   return makeTexture(480, 320, (ctx, w, h) => {
     ctx.fillStyle = "#0b0f17";
     ctx.fillRect(0, 0, w, h);
@@ -316,11 +383,7 @@ export function makeDeskpulseScreen({ time, temperature = "--°", condition = "c
     ctx.fillStyle = "#7fa89a";
     ctx.font = "22px Inter, Arial, sans-serif";
     ctx.fillText("Chennai", 34, 164);
-    // Weather icon (sun) + temperature
-    ctx.fillStyle = "#f2b45a";
-    ctx.beginPath();
-    ctx.arc(w - 90, 90, 30, 0, Math.PI * 2);
-    ctx.fill();
+    drawWeatherIcon(ctx, w - 90, 80, state, isDay);
     ctx.fillStyle = "#e6e6e6";
     ctx.font = "bold 34px Inter, Arial, sans-serif";
     ctx.textAlign = "center";

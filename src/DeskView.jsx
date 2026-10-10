@@ -3,7 +3,8 @@ import { FaArrowLeft, FaMoon, FaSun } from "react-icons/fa6";
 import FallbackScene from "./scene/FallbackScene";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { detect3DSupport } from "./three/support";
-import { getChennaiSkyPhase } from "./lib/chennaiTime";
+import { useSky } from "./three/useSky";
+import { useChennaiWeather } from "./three/useChennaiWeather";
 import { useReducedMotion } from "./hooks/useReducedMotion";
 import { useHashRoute } from "./hooks/useHashRoute";
 import { overlay } from "./three/registry";
@@ -58,15 +59,9 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const panelRef = useRef(null);
   const lastObject = useRef(null);
 
-  // Computed once for now; Phase 6 recomputes every minute with live weather.
-  // In dev, `?sky=night` (dawn|day|sunset|night) previews another time of day.
-  const sky = useMemo(() => {
-    if (import.meta.env.DEV) {
-      const forced = new URLSearchParams(window.location.search).get("sky");
-      if (forced && ["dawn", "day", "sunset", "night"].includes(forced)) return forced;
-    }
-    return getChennaiSkyPhase();
-  }, []);
+  // Chennai time of day (recomputed every minute) and live weather (cached 15 min).
+  const { sky, minute } = useSky();
+  const weather = useChennaiWeather();
 
   const use3D = supports3D && !failed;
   const onReady = useCallback(() => setReady(true), []);
@@ -181,6 +176,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
               <Experience
                 theme={theme}
                 sky={sky}
+                minute={minute}
+                weather={weather}
                 reducedMotion={reducedMotion}
                 hovered={hovered}
                 active={active}
@@ -218,7 +215,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
             aria-label={section.label}
             className="h-full w-full overflow-hidden focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
           >
-            {panelVisible && <PanelContent onShowPlain={onShowPlain} />}
+            {panelVisible && <PanelContent onShowPlain={onShowPlain} weather={weather} />}
           </section>
         </div>
       )}
