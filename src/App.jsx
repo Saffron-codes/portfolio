@@ -1,5 +1,5 @@
 import PlainView from "./plain/PlainView";
-import SceneView from "./scene/SceneView";
+import DeskView from "./DeskView";
 import { useTheme } from "./hooks/useTheme";
 import { usePlainMode } from "./hooks/usePlainMode";
 
@@ -10,5 +10,5 @@ export default function App() {
   if (isPlain) {
     return <PlainView theme={theme} onToggleTheme={toggleTheme} onExitPlain={() => setPlain(false)} />;
   }
-  return <SceneView theme={theme} onToggleTheme={toggleTheme} onShowPlain={() => setPlain(true)} />;
+  return <DeskView theme={theme} onToggleTheme={toggleTheme} onShowPlain={() => setPlain(true)} />;
 }
