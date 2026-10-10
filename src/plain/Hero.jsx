@@ -5,8 +5,7 @@ import projects from "../data/projects";
 import LinkIcon from "../components/LinkIcon";
 import DeskCard from "./DeskCard";
 import { iconButton, primaryButton, secondaryButton } from "./styles";
-
-const AVAILABILITY = "Open to freelance & full-time roles";
+import { AVAILABILITY } from "./availability";
 
 /** Quick facts derived from the data files only. */
 function quickFacts() {

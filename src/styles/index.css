@@ -162,3 +162,133 @@
     transition: none;
   }
 }
+
+
+/* ---- Reveal on scroll (hidden only once JS runs; never for reduced motion or print) ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .js-motion [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 500ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--delay, 0) * 1ms);
+  }
+  .js-motion [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+  .js-motion .reveal-group [data-reveal-item] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    transition:
+      opacity 400ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--i, 0) * 40ms + 120ms);
+  }
+  .js-motion .reveal-group.is-revealed [data-reveal-item] {
+    opacity: 1;
+    transform: none;
+  }
+  .js-motion .underline-accent {
+    transform: scaleX(0);
+    transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms;
+  }
+  .js-motion .is-revealed .underline-accent {
+    transform: scaleX(1);
+  }
+  .timeline-fill {
+    transform: scaleY(var(--timeline-progress, 0));
+    transition: transform 150ms linear;
+  }
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 2px rgb(79 127 114 / 0.3); }
+    50% { box-shadow: 0 0 0 7px rgb(79 127 114 / 0.08); }
+  }
+  .animate-pulse-ring {
+    animation: pulse-ring 2.4s ease-in-out infinite;
+  }
+  @keyframes blob-a {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(60px, 40px) scale(1.08); }
+  }
+  @keyframes blob-b {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-50px, 30px) scale(0.94); }
+  }
+  .blob-a { animation: blob-a 26s ease-in-out infinite; }
+  .blob-b { animation: blob-b 32s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-fill { transform: scaleY(1); }
+}
+
+/* Keycap chips (skills) */
+.keycap {
+  @apply select-none rounded-md border border-ink/10 bg-white px-3 py-1.5 text-sm font-medium text-ink shadow-[0_3px_0_0_rgb(43_37_33_/_0.18)] transition-[transform,box-shadow] duration-150 dark:border-cream/10 dark:bg-night-700 dark:text-cream dark:shadow-[0_3px_0_0_rgb(0_0_0_/_0.5)];
+}
+.keycap:hover {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 rgb(43 37 33 / 0.18);
+}
+.dark .keycap:hover {
+  box-shadow: 0 1px 0 0 rgb(0 0 0 / 0.5);
+}
+.keycap-accent {
+  @apply bg-[#8f84d6] text-night-900 shadow-[0_3px_0_0_rgb(94_84_170_/_0.9)] dark:bg-[#8f84d6] dark:text-night-900;
+}
+@media (prefers-reduced-motion: reduce) {
+  .keycap { transition: none; }
+}
+
+/* Film grain over the portfolio page */
+.portfolio-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+.dark .portfolio-page::before {
+  mix-blend-mode: screen;
+  opacity: 0.06;
+}
+.portfolio-page > main,
+.portfolio-page > footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Print: black on white, no chrome, nothing hidden by animations */
+@media print {
+  .portfolio-page,
+  .portfolio-page * {
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .portfolio-page::before,
+  .blob,
+  header,
+  .desk-card,
+  .print\:hidden {
+    display: none !important;
+  }
+  .js-motion [data-reveal],
+  .js-motion .reveal-group [data-reveal-item],
+  .js-motion .underline-accent,
+  .js-motion .hero-word {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+  }
+}

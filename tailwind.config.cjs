@@ -9,6 +9,7 @@ module.exports = {
       fontFamily: {
         sans: ["Inter", ...defaultTheme.fontFamily.sans],
         inter: ["Inter", ...defaultTheme.fontFamily.sans],
+        neon: ["Pacifico", "cursive"],
       },
       // Warm lo-fi palette shared by the plain view and the desk scene.
       colors: {

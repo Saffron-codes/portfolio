@@ -330,7 +330,7 @@ function TShirt({ x, color }) {
       ))}
       <mesh position={[0, 0.24, 0.019]}>
         <torusGeometry args={[0.05, 0.008, 6, 20, Math.PI]} />
-        <meshStandardMaterial color="#00000055" transparent opacity={0.3} roughness={1} />
+        <meshStandardMaterial color="#000000" transparent opacity={0.3} roughness={1} />
       </mesh>
     </group>
   );

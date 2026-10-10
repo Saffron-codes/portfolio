@@ -126,7 +126,7 @@ export default function DeskCard({ theme, sky, hour, minute, weather, onOpenDesk
   const hint = !supports3D ? "3D needs a WebGL-capable browser" : isMobile ? "Interactive 3D · best on desktop" : "Interactive 3D";
 
   return (
-    <div className="group relative" ref={card}>
+    <div className="desk-card group relative print:hidden" ref={card}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-ink/10 bg-night-900 shadow-xl shadow-ink/10 ring-1 ring-white/40 transition-transform duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 dark:border-cream/10 dark:ring-white/5">
         {/* Window frame strip */}
         <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-3 bg-gradient-to-b from-black/55 to-transparent px-4 pb-6 pt-3 text-xs text-white/85">
