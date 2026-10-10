@@ -424,8 +424,8 @@ export function TubeLight({ position }) {
       </mesh>
       {lightsOn && (
         <>
-          <sprite position={[0, -0.02, 0.06]} scale={[2.2, 0.75, 1]} userData={{ noShadow: true }}>
-            <spriteMaterial map={glow} transparent opacity={0.6} depthWrite={false} blending={THREE.AdditiveBlending} />
+          <sprite position={[0, -0.02, 0.12]} scale={[2.2, 0.75, 1]} renderOrder={10} userData={{ noShadow: true }}>
+            <spriteMaterial map={glow} transparent opacity={0.55} depthWrite={false} depthTest={false} blending={THREE.AdditiveBlending} />
           </sprite>
           <pointLight position={[0, -0.1, 0.25]} intensity={0.9} distance={2.6} decay={1.6} color="#fff6e4" />
         </>
