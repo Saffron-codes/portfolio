@@ -20,8 +20,6 @@ const WH = WINDOW.y1 - WINDOW.y0;
 const WCX = (WINDOW.x0 + WINDOW.x1) / 2;
 const WCY = (WINDOW.y0 + WINDOW.y1) / 2;
 
-const SKY_COLORS = { dawn: "#f7b98a", day: "#9fd0ee", sunset: "#f08a5d", night: "#0e1733" };
-
 function useFloorTexture() {
   return useMemo(() => {
     const size = 512;
@@ -88,30 +86,30 @@ function WindowFrame() {
   return (
     <group position={[0, 0, z]}>
       {/* Frame */}
-      <mesh position={[WCX, WINDOW.y1 - frame / 2, 0]}>
+      <mesh position={[WCX, WINDOW.y1 - frame / 2, 0]} castShadow>
         <boxGeometry args={[WW, frame, depth]} />
         {wood}
       </mesh>
-      <mesh position={[WCX, WINDOW.y0 + frame / 2, 0]}>
+      <mesh position={[WCX, WINDOW.y0 + frame / 2, 0]} castShadow>
         <boxGeometry args={[WW, frame, depth]} />
         {wood}
       </mesh>
-      <mesh position={[WINDOW.x0 + frame / 2, WCY, 0]}>
+      <mesh position={[WINDOW.x0 + frame / 2, WCY, 0]} castShadow>
         <boxGeometry args={[frame, WH, depth]} />
         {wood}
       </mesh>
-      <mesh position={[WINDOW.x1 - frame / 2, WCY, 0]}>
+      <mesh position={[WINDOW.x1 - frame / 2, WCY, 0]} castShadow>
         <boxGeometry args={[frame, WH, depth]} />
         {wood}
       </mesh>
       {mullionXs.map((x) => (
-        <mesh key={x} position={[x, WCY, 0]}>
+        <mesh key={x} position={[x, WCY, 0]} castShadow>
           <boxGeometry args={[0.05, WH, depth]} />
           {wood}
         </mesh>
       ))}
       {/* Grille */}
-      <Instances limit={16} position={[0, 0, -0.01]}>
+      <Instances limit={16} position={[0, 0, -0.01]} castShadow frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="#3a3a3a" roughness={0.6} metalness={0.5} />
         {bars.map((bar, i) => (
@@ -119,7 +117,7 @@ function WindowFrame() {
         ))}
       </Instances>
       {/* Mosquito mesh */}
-      <mesh position={[WCX, WCY, -0.05]}>
+      <mesh position={[WCX, WCY, -0.05]} userData={{ noShadow: true }}>
         <planeGeometry args={[WW - frame * 2, WH - frame * 2]} />
         <meshStandardMaterial color="#1a1a1a" transparent opacity={0.18} roughness={1} side={THREE.DoubleSide} />
       </mesh>
@@ -128,9 +126,8 @@ function WindowFrame() {
 }
 
 /** Walls, floor, window and the small wall details (cable, hook). */
-export default function Room({ sky = "day" }) {
+export default function Room() {
   const floorTexture = useFloorTexture();
-  const skyColor = SKY_COLORS[sky] ?? SKY_COLORS.day;
 
   return (
     <group>
@@ -165,15 +162,6 @@ export default function Room({ sky = "day" }) {
 
       <WindowFrame />
 
-      {/* Outside: ground and sky backdrop (tree and sunshade arrive in Phase 4) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -0.01, -4]}>
-        <planeGeometry args={[16, 8]} />
-        <meshStandardMaterial color="#6f7d5a" roughness={1} />
-      </mesh>
-      <mesh position={[0.5, 2.5, -3.4]}>
-        <planeGeometry args={[16, 10]} />
-        <meshBasicMaterial color={skyColor} />
-      </mesh>
     </group>
   );
 }

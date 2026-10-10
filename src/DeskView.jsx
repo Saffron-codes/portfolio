@@ -23,8 +23,15 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const [fallbackMounted, setFallbackMounted] = useState(true);
-  // Phase 3: computed once. Phase 6 recomputes every minute with live weather.
-  const sky = useMemo(() => getChennaiSkyPhase(), []);
+  // Computed once for now; Phase 6 recomputes every minute with live weather.
+  // In dev, `?sky=night` (dawn|day|sunset|night) previews another time of day.
+  const sky = useMemo(() => {
+    if (import.meta.env.DEV) {
+      const forced = new URLSearchParams(window.location.search).get("sky");
+      if (forced && ["dawn", "day", "sunset", "night"].includes(forced)) return forced;
+    }
+    return getChennaiSkyPhase();
+  }, []);
 
   const use3D = supports3D && !failed;
   const onReady = useCallback(() => setReady(true), []);
@@ -44,7 +51,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         >
           <ErrorBoundary onError={() => setFailed(true)}>
             <Suspense fallback={null}>
-              <Experience theme={theme} sky={sky} onReady={onReady} />
+              <Experience theme={theme} sky={sky} reducedMotion={reducedMotion} onReady={onReady} />
             </Suspense>
           </ErrorBoundary>
         </div>

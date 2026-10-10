@@ -17,7 +17,7 @@ export default function Desk(props) {
   return (
     <group name="desk" {...props}>
       {/* Top */}
-      <mesh position={[0, DESK_TOP - TOP / 2, 0]}>
+      <mesh position={[0, DESK_TOP - TOP / 2, 0]} castShadow>
         <boxGeometry args={[WIDTH, TOP, DEPTH]} />
         <meshStandardMaterial {...MAHOGANY} />
       </mesh>
