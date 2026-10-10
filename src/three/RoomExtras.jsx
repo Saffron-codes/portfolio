@@ -5,7 +5,7 @@ import { RoundedBox } from "@react-three/drei";
 import { useScene } from "./SceneContext";
 import { MathUtils } from "three";
 import { requestShadowUpdate } from "./shadows";
-import { makeFloralTexture } from "./textures";
+import { makeFloralTexture, makeGlowTexture } from "./textures";
 
 const CONCRETE = { color: "#a9a49b", roughness: 0.95 };
 const WOOD = { color: "#6b4a2f", roughness: 0.7 };
@@ -411,6 +411,7 @@ export function CeilingFan({ position }) {
 /** LED batten on the wall behind the chair: slim white bar, bright diffuser and a soft halo when on. */
 export function TubeLight({ position }) {
   const { lightsOn } = useScene();
+  const glow = useMemo(makeGlowTexture, []);
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <mesh position={[0, 0, 0.018]}>
@@ -423,10 +424,9 @@ export function TubeLight({ position }) {
       </mesh>
       {lightsOn && (
         <>
-          <mesh position={[0, 0, 0.05]} userData={{ noShadow: true }}>
-            <planeGeometry args={[1.5, 0.3]} />
-            <meshBasicMaterial color="#fff8e8" transparent opacity={0.22} depthWrite={false} blending={THREE.AdditiveBlending} />
-          </mesh>
+          <sprite position={[0, -0.02, 0.06]} scale={[2.2, 0.75, 1]} userData={{ noShadow: true }}>
+            <spriteMaterial map={glow} transparent opacity={0.6} depthWrite={false} blending={THREE.AdditiveBlending} />
+          </sprite>
           <pointLight position={[0, -0.1, 0.25]} intensity={0.9} distance={2.6} decay={1.6} color="#fff6e4" />
         </>
       )}

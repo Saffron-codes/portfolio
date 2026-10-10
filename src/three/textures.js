@@ -81,6 +81,19 @@ export function makeFloralTexture(base, accent, accent2, seed = 9) {
   return texture;
 }
 
+/** Soft radial glow (white centre fading out), for light halos. */
+export function makeGlowTexture() {
+  return makeTexture(256, 256, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, "rgba(255,250,235,0.9)");
+    g.addColorStop(0.3, "rgba(255,245,220,0.45)");
+    g.addColorStop(0.65, "rgba(255,240,210,0.12)");
+    g.addColorStop(1, "rgba(255,240,210,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+}
+
 /** Monitor idle wallpaper: moody grey sky, dark sea, white surf line, black-sand beach, dock bar. */
 export function makeMonitorWallpaper() {
   return makeTexture(1024, 614, (ctx, w, h) => {
