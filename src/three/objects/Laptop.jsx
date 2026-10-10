@@ -81,9 +81,8 @@ export default function Laptop({ name, onSelect, hovered, active, ...props }) {
         </group>
       </group>
 
-      {/* Cables trailing off the right side */}
-      <Cable points={[[0.17, 0.07, -0.04], [0.23, 0.05, -0.08], [0.27, 0.005, -0.16], [0.26, 0.002, -0.26]]} />
-      <Cable points={[[0.17, 0.075, 0.0], [0.24, 0.04, 0.03], [0.3, 0.004, -0.02], [0.33, 0.002, -0.2]]} radius={0.0025} />
+      {/* One charger cable off the right side, running straight back behind the desk */}
+      <Cable points={[[0.18, 0.072, -0.06], [0.215, 0.05, -0.08], [0.225, 0.004, -0.14], [0.225, 0.003, -0.3], [0.225, -0.1, -0.32]]} />
     </group>
   );
 }

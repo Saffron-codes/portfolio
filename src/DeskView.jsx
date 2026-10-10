@@ -10,6 +10,7 @@ import { useHashRoute } from "./hooks/useHashRoute";
 import { MOBILE_QUERY, useMediaQuery } from "./hooks/useMediaQuery";
 import MobileSheet from "./components/MobileSheet";
 import MobileDock from "./components/MobileDock";
+import WeatherCaption from "./components/WeatherCaption";
 import { overlay } from "./three/registry";
 import { LABELS, SECTIONS, sectionById, sectionForObject, TAB_ORDER } from "./three/sections";
 import { keyboardEvents, labelForKey } from "./three/keyboardStore";
@@ -293,6 +294,10 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         <p className={`pointer-events-none absolute left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70 ${isMobile ? "bottom-20" : "bottom-4"}`}>
           {isMobile ? "Tap anything on the desk ✨" : "Click anything on the desk ✨"}
         </p>
+      )}
+
+      {!section && (
+        <WeatherCaption weather={weather} className={`absolute right-4 sm:right-6 ${isMobile ? "bottom-20 left-4" : "bottom-4"}`} />
       )}
 
       {isMobile && <MobileDock onSelect={select} activeObject={active} isDark={isDark} buttonRefs={buttonRefs} />}

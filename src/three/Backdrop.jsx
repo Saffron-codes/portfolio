@@ -3,7 +3,8 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import { useScene } from "./SceneContext";
-import { seeded } from "./textures";
+import { makeTexture, seeded } from "./textures";
+import { sunPositionFor } from "./sun";
 
 /** Sky colours per Chennai time-of-day phase (top, bottom). */
 /**
@@ -35,9 +36,16 @@ const skyShader = {
 };
 
 /** Greyer, flatter skies for cloud, rain and fog. */
-export function skyColorsFor(sky, state, intensity = "none") {
+export function skyColorsFor(sky, state, intensity = "none", cloudCover = 0) {
   const night = sky === "night";
-  if (state === "cloudy") return night ? ["#161c2c", "#2a3140"] : ["#c9d0d6", "#eef0f2"];
+  if (state === "clear" || state === "cloudy") {
+    // Blend from the clear sky toward bright overcast as cloud cover grows.
+    const clear = SKY[sky] ?? SKY.day;
+    const overcast = night ? ["#161c2c", "#2a3140"] : ["#c9d0d6", "#eef0f2"];
+    const t = Math.min(1, Math.max(0, cloudCover / 100)) ** 1.4;
+    const mix = (a, b) => `#${new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString()}`;
+    return [mix(clear[0], overcast[0]), mix(clear[1], overcast[1])];
+  }
   if (state === "fog") return night ? ["#1a1f2a", "#2c323c"] : ["#c6ccd0", "#e3e6e8"];
   if (state === "rain" || state === "thunderstorm") {
     const heavy = state === "thunderstorm" || intensity === "heavy";
@@ -48,9 +56,9 @@ export function skyColorsFor(sky, state, intensity = "none") {
   return SKY[sky] ?? SKY.day;
 }
 
-function Sky({ sky, state, intensity }) {
+function Sky({ sky, state, intensity, cloudCover }) {
   const material = useMemo(() => new THREE.ShaderMaterial({ ...skyShader, uniforms: THREE.UniformsUtils.clone(skyShader.uniforms) }), []);
-  const [top, bottom] = skyColorsFor(sky, state, intensity);
+  const [top, bottom] = skyColorsFor(sky, state, intensity, cloudCover);
   material.uniforms.top.value.set(top);
   material.uniforms.bottom.value.set(bottom);
   useEffect(() => {
@@ -136,14 +144,63 @@ function Tree({ position }) {
   );
 }
 
-/** Everything outside the window: sky, ground, tree, sunshade, moon and stars at night. */
+/** Soft radial glow texture for the sun disc. */
+function makeSunGlow() {
+  return makeTexture(256, 256, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(0.18, "rgba(255,250,235,0.95)");
+    g.addColorStop(0.35, "rgba(255,236,190,0.45)");
+    g.addColorStop(1, "rgba(255,230,180,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+}
+
+/**
+ * The sun itself, far out in the sky along the real Chennai sun direction. Fades behind cloud,
+ * goes golden at dawn and sunset, and the haze glow pulses very slowly (the "sunny" feeling).
+ */
+function SunDisc({ hour, sky, cloudCover }) {
+  const { reducedMotion } = useScene();
+  const glow = useMemo(makeSunGlow, []);
+  const ref = useRef(null);
+  const position = useMemo(() => {
+    const [x, y, z] = sunPositionFor(hour);
+    const dir = new THREE.Vector3(x, y - 0.75, z).normalize();
+    return dir.multiplyScalar(6.6).add(new THREE.Vector3(0, 0.75, 0)).toArray();
+  }, [hour]);
+  const visible = sky !== "night" && cloudCover < 90;
+  const opacity = visible ? 1 - Math.max(0, cloudCover - 30) / 60 : 0;
+  const warm = sky === "dawn" || sky === "sunset";
+  useFrame(({ clock }) => {
+    if (!ref.current || reducedMotion) return;
+    const s = 1 + Math.sin(clock.getElapsedTime() * 0.35) * 0.06;
+    ref.current.scale.set(2.2 * s, 2.2 * s, 1);
+  });
+  if (!visible) return null;
+  return (
+    <group position={position}>
+      <sprite ref={ref} scale={[2.2, 2.2, 1]} userData={{ noShadow: true }}>
+        <spriteMaterial map={glow} color={warm ? "#ffb070" : "#fff6e0"} transparent opacity={opacity * 0.9} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </sprite>
+      <mesh userData={{ noShadow: true }}>
+        <circleGeometry args={[0.22, 32]} />
+        <meshBasicMaterial color={warm ? "#ffd27a" : "#fffbe6"} transparent opacity={opacity} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Everything outside the window: sky, sun, ground, tree, sunshade, moon and stars at night. */
 export default function Backdrop() {
-  const { sky, isNight, weather } = useScene();
-  const overcast = weather.state !== "clear";
+  const { sky, isNight, weather, hour } = useScene();
+  const overcast = weather.state !== "clear" || weather.cloudCover > 60;
   const wet = weather.state === "rain" || weather.state === "thunderstorm";
   return (
     <group>
-      <Sky sky={sky} state={weather.state} intensity={weather.intensity} />
+      <Sky sky={sky} state={weather.state} intensity={weather.intensity} cloudCover={weather.cloudCover ?? 0} />
+      <SunDisc hour={hour} sky={sky} cloudCover={wet || weather.state === "fog" ? 100 : (weather.cloudCover ?? 0)} />
       {/* Ground outside: dusty green when dry, dark and glossy when wet */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -0.02, -4]} userData={{ noShadow: true }}>
         <planeGeometry args={[24, 10]} />

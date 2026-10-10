@@ -15,9 +15,10 @@ import CameraRig from "./CameraRig";
 import Interactive from "./Interactive";
 import OverlayTracker from "./OverlayTracker";
 import { InteractionContext } from "./InteractionContext";
-import { isInteractive, LABELS } from "./sections";
+import { DETAILS, INFO, isInteractive, LABELS } from "./sections";
 import { SceneContext } from "./SceneContext";
 import { consumeShadowFrame, requestShadowUpdate } from "./shadows";
+import { sunPositionFor } from "./sun";
 
 const deg = (d) => (d * Math.PI) / 180;
 
@@ -32,16 +33,6 @@ const SUN = {
   sunset: { color: "#ff9a5c", intensity: 1.8 },
   night: { color: "#6f86c4", intensity: 0.12 },
 };
-
-/** Sun position for a Chennai hour: rises on the right of the window, peaks high, sets on the left. */
-export function sunPositionFor(hour) {
-  if (hour < 5.5 || hour > 18.5) return [0.6, 2.4, -2.4];
-  const t = (hour - 5.5) / 13; // 0 at dawn → 1 at dusk
-  const elevation = Math.sin(t * Math.PI); // 0 → 1 → 0
-  const x = 2.6 - t * 5.2;
-  const y = 0.9 + elevation * 3.4;
-  return [x, y, -2.4];
-}
 
 /** The sun through the window. Its shadow map is frozen; see shadows.js. */
 function SunLight({ position, intensity, color }) {
@@ -109,7 +100,8 @@ function ShadowSetup({ sky, lightsOn }) {
 
 /** How much the weather dims the direct sun. Overcast stays bright but flat; monsoon rain is dim. */
 function sunFactor(weather) {
-  if (weather.state === "cloudy") return 0.45;
+  const cover = Math.min(100, Math.max(0, weather.cloudCover ?? 0)) / 100;
+  if (weather.state === "clear" || weather.state === "cloudy") return 1 - 0.6 * cover ** 1.3;
   if (weather.state === "fog") return 0.4;
   if (weather.state === "thunderstorm") return 0.12;
   if (weather.state === "rain") return weather.intensity === "heavy" ? 0.15 : weather.intensity === "light" ? 0.45 : 0.28;
@@ -125,7 +117,8 @@ function Lights({ lightsOn, sky, weather, hour }) {
   const sunColor = weather.state === "clear" ? sun.color : raining ? "#b9c6d6" : "#e9edf1";
   const position = useMemo(() => sunPositionFor(hour), [hour]);
   // Overcast light is diffuse: more sky light, less direct sun. Rain is simply dim and cool.
-  const skyLight = isNight ? 0.06 : overcast ? 0.75 : raining ? 0.22 : 0.3;
+  const cover = Math.min(100, Math.max(0, weather.cloudCover ?? 0)) / 100;
+  const skyLight = isNight ? 0.06 : raining ? 0.22 : weather.state === "fog" ? 0.75 : 0.3 + 0.45 * cover;
   return (
     <>
       <ambientLight intensity={lightsOn ? 0.45 : isNight ? 0.04 : raining ? 0.08 : 0.12} color={lightsOn ? "#fff4e0" : "#aab6d6"} />
@@ -158,6 +151,11 @@ function RoomEnvironment({ lightsOn, sky }) {
 }
 
 const LABEL_OFFSETS = {
+  mouse: [0, 0.08, 0],
+  earbudsCase: [0, 0.08, 0],
+  glassesCase: [0, 0.1, 0],
+  penHolder: [0, 0.22, 0],
+  steelTin: [0, 0.18, 0],
   monitor: [0, 0.5, 0],
   laptop: [0, 0.36, 0],
   keyboard: [0, 0.12, 0],
@@ -174,11 +172,21 @@ function Objects({ hovered, active }) {
     <>
       {OBJECTS.map(({ name, position, rotation }) => {
         const Component = OBJECT_COMPONENTS[name];
-        if (!isInteractive(name)) {
+        const info = INFO[name];
+        if (!isInteractive(name) && !info) {
           return <Component key={name} name={name} position={position} rotation={rotation} />;
         }
         return (
-          <Interactive key={name} name={name} label={LABELS[name]} labelOffset={LABEL_OFFSETS[name]} position={position} rotation={rotation}>
+          <Interactive
+            key={name}
+            name={name}
+            label={info ? info.label : LABELS[name]}
+            detail={info ? info.detail : DETAILS[name]}
+            infoOnly={Boolean(info)}
+            labelOffset={LABEL_OFFSETS[name]}
+            position={position}
+            rotation={rotation}
+          >
             <Component name={name} hovered={hovered === name} active={active === name} />
           </Interactive>
         );
@@ -188,8 +196,11 @@ function Objects({ hovered, active }) {
 }
 
 /**
- * Compiles every material's shader program off the critical path (KHR_parallel_shader_compile
- * where available) before the render loop starts, so the first frames don't block the main thread.
+ * Issues every shader compile up front (the driver links them in parallel where
+ * KHR_parallel_shader_compile exists), then polls the renderer's program list until they are
+ * ready, with a time cap. three's own compileAsync is avoided: it keeps references to materials
+ * that may unmount meanwhile (e.g. the sun disc hiding when live cloud cover arrives) and then
+ * throws inside its timer and never resolves.
  */
 function WarmUp({ onCompiled }) {
   const gl = useThree((state) => state.gl);
@@ -197,13 +208,24 @@ function WarmUp({ onCompiled }) {
   const camera = useThree((state) => state.camera);
   useEffect(() => {
     let cancelled = false;
-    const done = () => {
-      if (!cancelled) onCompiled();
+    let timer = 0;
+    try {
+      gl.compile(scene, camera);
+    } catch {
+      /* fall through: programs compile lazily on first render instead */
+    }
+    const started = performance.now();
+    const poll = () => {
+      if (cancelled) return;
+      const programs = gl.info?.programs ?? [];
+      const ready = programs.every((program) => typeof program.isReady !== "function" || program.isReady());
+      if (ready || performance.now() - started > 4000) onCompiled();
+      else timer = setTimeout(poll, 16);
     };
-    if (typeof gl.compileAsync === "function") gl.compileAsync(scene, camera).then(done, done);
-    else done();
+    poll();
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [gl, scene, camera, onCompiled]);
   return null;
@@ -263,8 +285,8 @@ export default function Experience({
   const [compiled, setCompiled] = useState(false);
   const onCompiled = useCallback(() => setCompiled(true), []);
   const context = useMemo(
-    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute }),
-    [theme, lightsOn, sky, reducedMotion, weather, minute],
+    () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion, weather, minute, hour }),
+    [theme, lightsOn, sky, reducedMotion, weather, minute, hour],
   );
   const interaction = useMemo(
     () => ({ hovered, active, setHovered: onHover ?? (() => {}), select: onSelect ?? (() => {}) }),

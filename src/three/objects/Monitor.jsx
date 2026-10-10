@@ -20,9 +20,10 @@ export default function Monitor({ name, onSelect, hovered, active, ...props }) {
         <cylinderGeometry args={[0.03, 0.034, 0.015, 24]} />
         <meshStandardMaterial {...BLACK_PLASTIC} />
       </mesh>
+      {/* Inverted V: the two legs meet under the stem and spread back toward the wall */}
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 0.05, 0.006, 0.07]} rotation={[0, -side * 0.62, 0]} castShadow>
-          <boxGeometry args={[0.022, 0.012, 0.17]} />
+        <mesh key={side} position={[side * 0.055, 0.006, -0.075]} rotation={[0, side * 0.62, 0]} castShadow>
+          <boxGeometry args={[0.022, 0.012, 0.19]} />
           <meshStandardMaterial {...BLACK_PLASTIC} />
         </mesh>
       ))}

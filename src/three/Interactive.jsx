@@ -6,7 +6,7 @@ import { useInteraction } from "./InteractionContext";
  * Makes a desk object clickable: hover glow + floating label, pointer cursor, click → select.
  * Wraps the object's group; the geometry inside knows nothing about interaction.
  */
-export default function Interactive({ name, label, labelOffset = [0, 0.3, 0], children, ...props }) {
+export default function Interactive({ name, label, detail, infoOnly = false, labelOffset = [0, 0.3, 0], children, ...props }) {
   const { hovered, active, setHovered, select } = useInteraction();
   const group = useRef(null);
   const isHovered = hovered === name && !active;
@@ -19,10 +19,10 @@ export default function Interactive({ name, label, labelOffset = [0, 0.3, 0], ch
       const material = object.material;
       if (!object.isMesh || !material?.emissive || material.emissiveMap || object.userData.noHighlight) return;
       saved.push([material, material.emissive.getHex(), material.emissiveIntensity]);
-      material.emissive.set("#ffd9a0");
-      material.emissiveIntensity = 0.22;
+      material.emissive.set("#ffe2b8");
+      material.emissiveIntensity = 0.1;
     });
-    document.body.style.cursor = "pointer";
+    document.body.style.cursor = infoOnly ? "default" : "pointer";
     return () => {
       saved.forEach(([material, hex, intensity]) => {
         material.emissive.setHex(hex);
@@ -30,7 +30,7 @@ export default function Interactive({ name, label, labelOffset = [0, 0.3, 0], ch
       });
       document.body.style.cursor = "";
     };
-  }, [isHovered]);
+  }, [isHovered, infoOnly]);
 
   return (
     <group
@@ -46,14 +46,15 @@ export default function Interactive({ name, label, labelOffset = [0, 0.3, 0], ch
       }}
       onClick={(event) => {
         event.stopPropagation();
-        select(name);
+        if (!infoOnly) select(name);
       }}
     >
       {children}
       {isHovered && (
         <Html position={labelOffset} center zIndexRange={[40, 0]} style={{ pointerEvents: "none" }}>
-          <div className="whitespace-nowrap rounded-full bg-ink/80 px-3 py-1 text-sm font-medium text-cream shadow-lg backdrop-blur dark:bg-cream/90 dark:text-ink">
+          <div className="whitespace-nowrap rounded-xl bg-ink/80 px-3 py-1.5 text-center text-sm font-medium leading-tight text-cream shadow-lg backdrop-blur dark:bg-cream/90 dark:text-ink">
             {label}
+            {detail && <span className="block text-[11px] font-normal opacity-75">{detail}</span>}
           </div>
         </Html>
       )}

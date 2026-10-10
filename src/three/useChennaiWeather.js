@@ -1,21 +1,29 @@
 import { useEffect, useState } from "react";
 
 const ENDPOINT =
-  "https://api.open-meteo.com/v1/forecast?latitude=13.08&longitude=80.27&current=temperature_2m,weather_code,is_day";
+  "https://api.open-meteo.com/v1/forecast?latitude=13.08&longitude=80.27&current=temperature_2m,weather_code,is_day,cloud_cover,precipitation";
 const CACHE_KEY = "chennai-weather";
 const CACHE_TTL = 15 * 60 * 1000;
 
 export const STATES = ["clear", "cloudy", "fog", "rain", "thunderstorm"];
 
 /** Used when nothing has loaded (or the fetch failed): clear, no temperature. */
-export const CLEAR_WEATHER = { state: "clear", label: "clear", intensity: "none", temperature: null, isDay: true, code: 0 };
+export const CLEAR_WEATHER = { state: "clear", label: "clear", intensity: "none", temperature: null, isDay: true, code: 0, cloudCover: 10, precipitation: 0 };
 
 /** WMO weather code → our five states and a short label. */
-/** `intensity` drives how heavy the rain looks: Chennai monsoon rain is usually "heavy". */
-export function mapWeatherCode(code) {
-  if (code === 0 || code === 1) return { state: "clear", label: "clear", intensity: "none" };
-  if (code === 2) return { state: "cloudy", label: "partly cloudy", intensity: "none" };
-  if (code === 3) return { state: "cloudy", label: "overcast", intensity: "none" };
+/**
+ * `intensity` drives how heavy the rain looks: Chennai monsoon rain is usually "heavy".
+ * For the dry codes (0–3) the cloud-cover percentage decides the label, so "mildly sunny"
+ * afternoons read as "partly cloudy" rather than a flat "clear" or "overcast".
+ */
+export function mapWeatherCode(code, cloudCover = null) {
+  if (code >= 0 && code <= 3) {
+    const cover = cloudCover ?? [5, 20, 55, 95][code];
+    if (cover < 25) return { state: "clear", label: "clear", intensity: "none" };
+    if (cover < 55) return { state: "clear", label: "partly cloudy", intensity: "none" };
+    if (cover < 85) return { state: "cloudy", label: "mostly cloudy", intensity: "none" };
+    return { state: "cloudy", label: "overcast", intensity: "none" };
+  }
   if (code === 45 || code === 48) return { state: "fog", label: "misty", intensity: "none" };
   if ([51, 53, 55, 56, 57].includes(code)) return { state: "rain", label: "drizzle", intensity: "light" };
   if ([61, 66, 80].includes(code)) return { state: "rain", label: "light rain", intensity: "medium" };
@@ -30,11 +38,16 @@ export function mapWeatherCode(code) {
 
 function normalize(current) {
   const code = Number(current?.weather_code ?? 0);
+  const cloudCover = typeof current?.cloud_cover === "number" ? current.cloud_cover : null;
+  const mapped = mapWeatherCode(code, cloudCover);
+  const raining = mapped.state === "rain" || mapped.state === "thunderstorm";
   return {
-    ...mapWeatherCode(code),
+    ...mapped,
     code,
     temperature: typeof current?.temperature_2m === "number" ? current.temperature_2m : null,
     isDay: current?.is_day !== 0,
+    cloudCover: cloudCover ?? (raining ? 100 : [5, 20, 55, 95][code] ?? 50),
+    precipitation: typeof current?.precipitation === "number" ? current.precipitation : 0,
   };
 }
 
@@ -58,15 +71,17 @@ function writeCache(data) {
   }
 }
 
-/** Dev: `?weather=` clear | cloudy | fog | drizzle | rain | heavyrain | thunderstorm. */
+/** Dev: `?weather=` clear | partly | mostly | cloudy | fog | drizzle | rain | heavyrain | thunderstorm. */
 const DEV_PRESETS = {
-  clear: { code: 0, temperature: 34 },
-  cloudy: { code: 3, temperature: 31 },
-  fog: { code: 45, temperature: 24 },
-  drizzle: { code: 51, temperature: 28 },
-  rain: { code: 61, temperature: 27 },
-  heavyrain: { code: 65, temperature: 25 },
-  thunderstorm: { code: 95, temperature: 25 },
+  clear: { code: 0, temperature: 34, cloudCover: 5 },
+  partly: { code: 2, temperature: 33, cloudCover: 45 },
+  mostly: { code: 3, temperature: 32, cloudCover: 72 },
+  cloudy: { code: 3, temperature: 31, cloudCover: 97 },
+  fog: { code: 45, temperature: 24, cloudCover: 100 },
+  drizzle: { code: 51, temperature: 28, cloudCover: 90 },
+  rain: { code: 61, temperature: 27, cloudCover: 100 },
+  heavyrain: { code: 65, temperature: 25, cloudCover: 100 },
+  thunderstorm: { code: 95, temperature: 25, cloudCover: 100 },
 };
 
 function devOverride() {
@@ -74,7 +89,7 @@ function devOverride() {
   const forced = new URLSearchParams(window.location.search).get("weather");
   const preset = DEV_PRESETS[forced];
   if (!preset) return null;
-  return { ...mapWeatherCode(preset.code), code: preset.code, temperature: preset.temperature, isDay: true };
+  return { ...mapWeatherCode(preset.code, preset.cloudCover), code: preset.code, temperature: preset.temperature, isDay: true, cloudCover: preset.cloudCover, precipitation: 0 };
 }
 
 /**

@@ -45,6 +45,8 @@ function Clouds() {
   const { reducedMotion, isNight, weather } = useScene();
   const groups = useRef([]);
   const wind = windFor(weather);
+  const cover = Math.min(100, Math.max(0, weather.cloudCover ?? 0));
+  const shown = Math.max(2, Math.round((CLOUDS.length * cover) / 100));
   const raining = weather.state === "rain" || weather.state === "thunderstorm";
   const heavy = weather.state === "thunderstorm" || weather.intensity === "heavy";
   const color = isNight ? (raining ? "#1a2029" : "#3b4360") : raining ? (heavy ? "#4a535d" : "#7d868f") : "#f2f4f6";
@@ -61,7 +63,7 @@ function Clouds() {
 
   return (
     <group>
-      {CLOUDS.map((cloud, i) => (
+      {CLOUDS.slice(0, shown).map((cloud, i) => (
         <group
           key={i}
           ref={(el) => {
@@ -252,7 +254,7 @@ export default function Weather() {
   // Rendered as a fragment so <fog attach="fog"> attaches to the scene, not a group.
   return (
     <>
-      {(state === "cloudy" || raining) && <Clouds />}
+      {(raining || (weather.cloudCover ?? 0) > 15) && <Clouds />}
       {raining && <Rain profile={profile} />}
       {raining && <Droplets profile={profile} />}
       {raining && <ShadeDrips heavy={heavy} />}

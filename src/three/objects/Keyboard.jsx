@@ -12,20 +12,24 @@ import { keyboardEvents } from "../keyboardStore";
 /* eslint-disable no-unused-vars */
 export { KEYS };
 
+/** Coiled lead from the keyboard's back-right corner, then a tidy run to the laptop's left-side port. */
 function CoiledCable() {
   const geometry = useMemo(() => {
     const points = [];
-    const x0 = -0.1;
+    const x0 = 0.13;
     const zStart = -CASE.depth / 2 - 0.004;
-    for (let i = 0; i <= 60; i += 1) {
-      const t = i / 60;
-      const angle = t * Math.PI * 2 * 7;
-      points.push(new THREE.Vector3(x0 + Math.cos(angle) * 0.007, 0.012 + Math.sin(angle) * 0.007, zStart - t * 0.085));
+    for (let i = 0; i <= 40; i += 1) {
+      const t = i / 40;
+      const angle = t * Math.PI * 2 * 5;
+      points.push(new THREE.Vector3(x0 + Math.cos(angle) * 0.006, 0.011 + Math.sin(angle) * 0.006, zStart - t * 0.05));
     }
-    points.push(new THREE.Vector3(x0 - 0.01, 0.003, zStart - 0.13));
-    points.push(new THREE.Vector3(x0 - 0.05, 0.002, zStart - 0.2));
+    // Laptop left port in keyboard-local space ≈ (0.35, 0.01, -0.21)
+    points.push(new THREE.Vector3(x0 + 0.03, 0.004, zStart - 0.075));
+    points.push(new THREE.Vector3(0.24, 0.003, -0.16));
+    points.push(new THREE.Vector3(0.33, 0.006, -0.2));
+    points.push(new THREE.Vector3(0.35, 0.012, -0.21));
     const curve = new THREE.CatmullRomCurve3(points);
-    return new THREE.TubeGeometry(curve, 240, 0.0022, 6, false);
+    return new THREE.TubeGeometry(curve, 200, 0.0022, 6, false);
   }, []);
   return (
     <mesh geometry={geometry}>
