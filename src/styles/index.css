@@ -125,3 +125,40 @@
     transition: none;
   }
 }
+
+
+/* ---- Portfolio page motion ---- */
+.portfolio-page {
+  transition: opacity 400ms ease;
+}
+.leaving .portfolio-page {
+  opacity: 0;
+}
+@keyframes rise-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .js-motion .hero-word {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: rise-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 90ms + 60ms);
+  }
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(2.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-dot {
+    animation: pulse-dot 2s ease-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-page {
+    transition: none;
+  }
+}

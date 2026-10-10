@@ -5,6 +5,7 @@ import { CameraControls } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { DEFAULT_POSE, MOBILE_POSE, SEATED_POSE, poseFor } from "./focus";
 import { useScene } from "./SceneContext";
+import { handoff } from "./handoff";
 
 const deg = (d) => (d * Math.PI) / 180;
 
@@ -83,7 +84,7 @@ function applyLimits(controls, relaxed) {
  * flies to that object's panel (~1.2 s, instant with reduced motion) and locks input; on
  * `active = null` flies back. Calls onArrive(name) when a flight settles.
  */
-export default function CameraRig({ active, onArrive, fixed = false, seated = false }) {
+export default function CameraRig({ active, onArrive, fixed = false, seated = false, preview = false }) {
   const ref = useRef(null);
   const idle = useRef({ lastInput: 0, drift: 0 });
   const { reducedMotion } = useScene();
@@ -96,7 +97,14 @@ export default function CameraRig({ active, onArrive, fixed = false, seated = fa
     const start = lookPose(DEFAULT_POSE);
     controls.setLookAt(...start.position, ...start.target, false);
     wrapAzimuth(controls);
-    lockInput(controls, false);
+    lockInput(controls, preview);
+    // Arriving from the hero preview: pick up its yaw, then glide to the default view.
+    if (!preview && handoff.opening && Math.abs(handoff.azimuth) > 0.001) {
+      controls.rotate(handoff.azimuth, 0, false);
+      controls.smoothTime = 0.9;
+      controls.rotate(-handoff.azimuth, 0, true);
+      handoff.azimuth = 0;
+    }
     if (import.meta.env.DEV) {
       window.__cameraControls = controls;
       window.__scene = scene;
@@ -111,6 +119,7 @@ export default function CameraRig({ active, onArrive, fixed = false, seated = fa
     const animate = !reducedMotion;
     controls.smoothTime = animate ? 0.55 : 0;
 
+    if (preview) return undefined;
     const pose = active ? poseFor(active) : lookPose(fixed ? MOBILE_POSE : seated ? SEATED_POSE : DEFAULT_POSE);
     if (!pose) return undefined;
 
@@ -127,7 +136,7 @@ export default function CameraRig({ active, onArrive, fixed = false, seated = fa
     return () => {
       cancelled = true;
     };
-  }, [active, reducedMotion, onArrive, fixed, seated]);
+  }, [active, reducedMotion, onArrive, fixed, seated, preview]);
 
   // Idle drift: a very slow sway of the view after 5 s without interaction.
   useEffect(() => {
@@ -144,9 +153,20 @@ export default function CameraRig({ active, onArrive, fixed = false, seated = fa
       controls.removeEventListener("control", mark);
     };
   }, []);
+  // Hero preview: a slow ±12° sway around the default view; the current yaw is shared for the handoff.
   useFrame(({ clock }) => {
     const controls = ref.current;
-    if (!controls || reducedMotion || active || fixed) return;
+    if (!controls || !preview || reducedMotion) return;
+    const target = Math.sin(clock.getElapsedTime() * 0.22) * deg(12);
+    const delta = target - idle.current.drift;
+    idle.current.drift = target;
+    handoff.azimuth = target;
+    controls.rotate(delta, 0, false);
+  });
+
+  useFrame(({ clock }) => {
+    const controls = ref.current;
+    if (!controls || reducedMotion || active || fixed || preview) return;
     const now = performance.now() / 1000;
     if (now - idle.current.lastInput < 5) return;
     const target = Math.sin(clock.getElapsedTime() * 0.12) * 0.035;

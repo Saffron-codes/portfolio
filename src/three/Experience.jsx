@@ -275,6 +275,7 @@ export default function Experience({
   mobile = false,
   seated = false,
   doorOpen = false,
+  preview = false,
   onHover,
   onSelect,
   onArrive,
@@ -283,7 +284,7 @@ export default function Experience({
   const visible = useTabVisible();
   const lightsOn = theme !== "dark";
   // Pixel ratio: start high, let PerformanceMonitor drop it on slow devices.
-  const [dpr, setDpr] = useState(mobile ? 1.5 : 1.75);
+  const [dpr, setDpr] = useState(preview ? 1 : mobile ? 1.5 : 1.75);
   // The loop stays off until shaders are compiled; the 2D scene covers the wait.
   const [compiled, setCompiled] = useState(false);
   const onCompiled = useCallback(() => setCompiled(true), []);
@@ -298,7 +299,8 @@ export default function Experience({
 
   return (
     <Canvas
-      dpr={dpr}
+      dpr={preview ? 1 : dpr}
+      style={preview ? { pointerEvents: "none" } : undefined}
       shadows="soft"
       frameloop={compiled && visible && !paused ? "always" : "never"}
       camera={{ fov: mobile ? 56 : 42, near: 0.05, far: 60, position: DEFAULT_POSE.position }}
@@ -311,7 +313,7 @@ export default function Experience({
     >
       <SceneContext.Provider value={context}>
         <InteractionContext.Provider value={interaction}>
-          <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(mobile ? 1.5 : 1.75)} flipflops={2} onFallback={() => setDpr(1)} />
+          {!preview && <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(mobile ? 1.5 : 1.75)} flipflops={2} onFallback={() => setDpr(1)} />}
           <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
           <Lights lightsOn={lightsOn} sky={sky} weather={weather} hour={hour} />
           <Exposure sky={sky} weather={weather} />
@@ -323,7 +325,7 @@ export default function Experience({
           <Desk />
           <Objects hovered={hovered} active={active} seated={seated} />
           <ShadowSetup sky={sky} lightsOn={lightsOn} />
-          <CameraRig active={active} onArrive={onArrive} fixed={mobile} seated={seated} />
+          <CameraRig active={active} onArrive={onArrive} fixed={mobile} seated={seated} preview={preview} />
           <OverlayTracker />
           <WarmUp onCompiled={onCompiled} />
           {compiled && <Ready onReady={onReady} />}

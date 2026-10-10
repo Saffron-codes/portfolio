@@ -1,4 +1,4 @@
-import { FaDownload, FaEnvelope, FaLocationDot, FaMoon, FaSun } from "react-icons/fa6";
+import { FaDownload, FaEnvelope } from "react-icons/fa6";
 import profile from "../data/profile";
 import experience from "../data/experience";
 import projects from "../data/projects";
@@ -6,8 +6,14 @@ import skills from "../data/skills";
 import education, { educationMedia } from "../data/education";
 import ProjectCard from "../components/ProjectCard";
 import LinkIcon from "../components/LinkIcon";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useReducedMotion } from "../hooks/useReducedMotion";
+import { useScrollSpy } from "../hooks/useScrollSpy";
+import { useSky } from "../three/useSky";
+import { useChennaiWeather } from "../three/useChennaiWeather";
+import Navbar from "./Navbar";
+import Hero from "./Hero";
+import { primaryButton, secondaryButton } from "./styles";
 
 const SECTIONS = [
   { id: "about", label: "About" },
@@ -17,15 +23,11 @@ const SECTIONS = [
   { id: "education", label: "Education" },
   { id: "contact", label: "Contact" },
 ];
-
-const buttonClass =
-  "inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 focus-visible:ring-offset-2 focus-visible:ring-offset-cream dark:focus-visible:ring-sage-400 dark:focus-visible:ring-offset-night-900";
-const primaryButton = `${buttonClass} bg-sage-600 text-white hover:bg-sage-700 dark:bg-sage-500 dark:hover:bg-sage-400 dark:text-night-900`;
-const secondaryButton = `${buttonClass} border border-ink/15 hover:border-sage-600 hover:text-sage-700 dark:border-cream/20 dark:hover:border-sage-400 dark:hover:text-sage-300`;
+const SECTION_IDS = SECTIONS.map((s) => s.id);
 
 function Section({ id, title, children }) {
   return (
-    <section id={id} aria-labelledby={`${id}-heading`} className="scroll-mt-24">
+    <section id={id} aria-labelledby={`${id}-heading`} className="mx-auto w-full max-w-3xl scroll-mt-24">
       <h2
         id={`${id}-heading`}
         className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-sage-700 dark:text-sage-300"
@@ -48,11 +50,15 @@ function dateRange(start, end) {
  */
 export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor, onOpenDesk }) {
   const reducedMotion = useReducedMotion();
-  const isDark = theme === "dark";
+  const activeId = useScrollSpy(SECTION_IDS);
+  const { sky, hour, minute } = useSky();
+  const weather = useChennaiWeather();
 
-  // Returning from the desk restores the hero.
+  // Returning from the desk restores the hero (and fades the page back in).
   useEffect(() => {
     if (!anchor) window.scrollTo({ top: 0, behavior: "auto" });
+    const id = requestAnimationFrame(() => document.documentElement.classList.remove("leaving"));
+    return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -64,15 +70,16 @@ export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor,
     onClearAnchor?.();
   }, [anchor, onClearAnchor]);
 
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: reducedMotion ? "auto" : "smooth",
-      block: "start",
-    });
-  };
+  const scrollTo = useCallback(
+    (id) => {
+      document.getElementById(id)?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    },
+    [reducedMotion],
+  );
+  const scrollTop = useCallback(() => window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" }), [reducedMotion]);
 
   return (
-    <div className="min-h-screen bg-cream text-ink dark:bg-night-900 dark:text-cream">
+    <div className="portfolio-page min-h-screen bg-cream text-ink dark:bg-night-900 dark:text-cream">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-sage-600 focus:px-3 focus:py-2 focus:text-white"
@@ -80,57 +87,10 @@ export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor,
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-10 border-b border-ink/10 bg-cream/90 backdrop-blur dark:border-cream/10 dark:bg-night-900/90">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-          <nav aria-label="Sections" className="-mx-1 flex flex-wrap gap-1">
-            {SECTIONS.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => scrollTo(section.id)}
-                className="rounded-md px-2 py-1 text-sm text-ink/70 hover:bg-ink/5 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-cream/70 dark:hover:bg-cream/10 dark:hover:text-cream"
-              >
-                {section.label}
-              </button>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              aria-pressed={isDark}
-              className={`${secondaryButton} px-2.5`}
-            >
-              {isDark ? <FaSun size={16} aria-hidden="true" /> : <FaMoon size={16} aria-hidden="true" />}
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar sections={SECTIONS} activeId={activeId} theme={theme} onToggleTheme={onToggleTheme} onNavigate={scrollTo} onHome={scrollTop} />
 
-      <main id="main" className="mx-auto flex max-w-3xl flex-col gap-14 px-4 pb-20 pt-12 sm:px-6">
-        <Section id="about" title="About">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{profile.name}</h1>
-          <p className="mt-2 text-xl font-medium text-sage-700 dark:text-sage-300">{profile.title}</p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-ink/70 dark:text-cream/70">
-            <FaLocationDot size={13} aria-hidden="true" />
-            {profile.location}
-          </p>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/80 dark:text-cream/80">
-            {profile.bio}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <a href={`mailto:${profile.email}`} className={primaryButton}>
-              <FaEnvelope size={14} aria-hidden="true" />
-              Email me
-            </a>
-            <a href={profile.resume} download className={secondaryButton}>
-              <FaDownload size={14} aria-hidden="true" />
-              Download resume
-            </a>
-          </div>
-        </Section>
-
+      <main id="main" className="mx-auto flex max-w-6xl flex-col gap-16 px-4 pb-20 sm:px-6">
+        <Hero theme={theme} sky={sky} hour={hour} minute={minute} weather={weather} onOpenDesk={onOpenDesk} />
         <Section id="experience" title="Experience">
           <ol className="flex flex-col gap-8">
             {experience.map((job) => (

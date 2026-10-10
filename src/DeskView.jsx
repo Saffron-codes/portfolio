@@ -10,6 +10,8 @@ import { MOBILE_QUERY, useMediaQuery } from "./hooks/useMediaQuery";
 import MobileSheet from "./components/MobileSheet";
 import MobileDock from "./components/MobileDock";
 import WeatherCaption from "./components/WeatherCaption";
+import { handoff } from "./three/handoff";
+import { posterFor } from "./plain/posters";
 import { overlay } from "./three/registry";
 import { LABELS, SECTIONS, sectionById, sectionForObject, TAB_ORDER } from "./three/sections";
 import { keyboardEvents, labelForKey } from "./three/keyboardStore";
@@ -78,6 +80,16 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
   const [helpOpen, setHelpOpen] = useState(false);
   const [seated, setSeated] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
+  // Arrived via the hero card: keep its poster up (not the SVG) until the 3D is ready.
+  const [fromCard] = useState(() => handoff.opening);
+  useEffect(() => {
+    if (ready) handoff.opening = false;
+  }, [ready]);
+  const backToPortfolio = useCallback(() => {
+    handoff.opening = false;
+    handoff.returning = true;
+    onBackToPortfolio();
+  }, [onBackToPortfolio]);
   const buttonRefs = useRef({});
   const panelRef = useRef(null);
   const lastObject = useRef(null);
@@ -181,7 +193,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
         if (helpOpen) setHelpOpen(false);
         else if (section) goBack();
         else if (seated) setSeated(false);
-        else onBackToPortfolio();
+        else backToPortfolio();
         return;
       }
       if (event.key === "?") {
@@ -189,7 +201,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
         return;
       }
       if (event.key === "p" || event.key === "P") {
-        onBackToPortfolio();
+        backToPortfolio();
         return;
       }
       const match = SECTIONS.find((s) => s.shortcut === event.key);
@@ -197,7 +209,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [section, helpOpen, seated, goBack, onBackToPortfolio, openSection]);
+  }, [section, helpOpen, seated, goBack, backToPortfolio, openSection]);
 
   const PanelContent = panel?.Component;
 
@@ -229,7 +241,15 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
         </div>
       )}
 
-      {(fallbackMounted || !use3D) && (
+      {fromCard && use3D && fallbackMounted && (
+        <img
+          src={posterFor(theme)}
+          alt=""
+          aria-hidden="true"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out motion-reduce:transition-none ${ready ? "pointer-events-none opacity-0" : "opacity-100"}`}
+        />
+      )}
+      {(fallbackMounted || !use3D) && !(fromCard && use3D) && (
         <div
           className={`absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none ${ready && use3D ? "pointer-events-none opacity-0" : "opacity-100"}`}
           aria-hidden={ready && use3D}
@@ -242,7 +262,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
       {panel && isMobile && (
         <MobileSheet title={section.label} tone={SHEET_TONES[section.id]} onClose={goBack}>
           <section ref={panelRef} tabIndex={-1} aria-label={section.label} className="min-h-full focus:outline-none focus-visible:ring-0">
-            <PanelContent onBackToPortfolio={onBackToPortfolio} weather={weather} />
+            <PanelContent onBackToPortfolio={backToPortfolio} weather={weather} />
           </section>
         </MobileSheet>
       )}
@@ -260,7 +280,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
             aria-label={section.label}
             className="h-full w-full overflow-hidden focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
           >
-            {panelVisible && <PanelContent onBackToPortfolio={onBackToPortfolio} weather={weather} />}
+            {panelVisible && <PanelContent onBackToPortfolio={backToPortfolio} weather={weather} />}
           </section>
         </div>
       )}
@@ -287,7 +307,7 @@ export default function DeskView({ theme, onToggleTheme, section: sectionId, onO
         <button type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className={`${chromeButton} px-2.5`}>
           {isDark ? <FaSun size={15} aria-hidden="true" /> : <FaMoon size={15} aria-hidden="true" />}
         </button>
-        <button type="button" onClick={onBackToPortfolio} className={chromeButton}>
+        <button type="button" onClick={backToPortfolio} className={chromeButton}>
           <FaArrowLeft size={13} aria-hidden="true" /> Back to portfolio
         </button>
       </div>
