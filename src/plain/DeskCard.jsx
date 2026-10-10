@@ -195,7 +195,7 @@ export default function DeskCard({ theme, sky, hour, minute, weather, onOpenDesk
             Step inside
             <FaArrowRight size={12} aria-hidden="true" className="transition-transform duration-300 motion-reduce:transition-none group-hover:translate-x-1" />
           </span>
-          <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] text-white/80 backdrop-blur">{hint}</span>
+          <span aria-hidden="true" className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] text-white/80 backdrop-blur">{hint}</span>
         </button>
       </div>
 
