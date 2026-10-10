@@ -1,14 +1,23 @@
 import PlainView from "./plain/PlainView";
 import DeskView from "./DeskView";
 import { useTheme } from "./hooks/useTheme";
-import { usePlainMode } from "./hooks/usePlainMode";
+import { useViewMode } from "./hooks/useViewMode";
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
-  const { isPlain, setPlain } = usePlainMode();
+  const { view, section, anchor, openDesk, closeDesk, openDeskSection, deskOverview, clearAnchor } = useViewMode();
 
-  if (isPlain) {
-    return <PlainView theme={theme} onToggleTheme={toggleTheme} onExitPlain={() => setPlain(false)} />;
+  if (view === "desk") {
+    return (
+      <DeskView
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        section={section}
+        onOpenSection={openDeskSection}
+        onDeskOverview={deskOverview}
+        onBackToPortfolio={closeDesk}
+      />
+    );
   }
-  return <DeskView theme={theme} onToggleTheme={toggleTheme} onShowPlain={() => setPlain(true)} />;
+  return <PlainView theme={theme} onToggleTheme={toggleTheme} anchor={anchor} onClearAnchor={clearAnchor} onOpenDesk={openDesk} />;
 }

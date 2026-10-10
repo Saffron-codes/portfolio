@@ -6,6 +6,7 @@ import skills from "../data/skills";
 import education, { educationMedia } from "../data/education";
 import ProjectCard from "../components/ProjectCard";
 import LinkIcon from "../components/LinkIcon";
+import { useEffect } from "react";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
 const SECTIONS = [
@@ -41,12 +42,27 @@ function dateRange(start, end) {
 }
 
 /**
- * Recruiter mode / plain view: every section as a fast, single-column page.
- * Uses the same data files as the desk scene.
+ * The portfolio (recruiter) page: the home page, every section as a fast single-column page.
+ * Uses the same data files as the desk scene. Section links scroll without touching the hash;
+ * a legacy "#projects"-style hash from an old link is treated as an in-page anchor once.
  */
-export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
+export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor, onOpenDesk }) {
   const reducedMotion = useReducedMotion();
   const isDark = theme === "dark";
+
+  // Returning from the desk restores the hero.
+  useEffect(() => {
+    if (!anchor) window.scrollTo({ top: 0, behavior: "auto" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A legacy "#projects"-style hash (old links, or typed in) scrolls to that section and is then cleared.
+  useEffect(() => {
+    const target = anchor && SECTIONS.some((s) => s.id === anchor) ? document.getElementById(anchor) : null;
+    if (!target) return;
+    target.scrollIntoView({ behavior: "auto", block: "start" });
+    onClearAnchor?.();
+  }, [anchor, onClearAnchor]);
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({
@@ -79,11 +95,6 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            {onExitPlain && (
-              <button type="button" onClick={onExitPlain} className={secondaryButton}>
-                Back to desk
-              </button>
-            )}
             <button
               type="button"
               onClick={onToggleTheme}
@@ -232,7 +243,21 @@ export default function PlainView({ theme, onToggleTheme, onExitPlain }) {
       </main>
 
       <footer className="border-t border-ink/10 py-6 text-center text-xs text-ink/50 dark:border-cream/10 dark:text-cream/50">
-        © {new Date().getFullYear()} {profile.name}
+        <p>© {new Date().getFullYear()} {profile.name}</p>
+        {onOpenDesk && (
+          <p className="mt-2">
+            <a
+              href="#desk"
+              onClick={(event) => {
+                event.preventDefault();
+                onOpenDesk();
+              }}
+              className="text-sage-700 underline-offset-2 hover:underline dark:text-sage-300"
+            >
+              Step into my desk in 3D →
+            </a>
+          </p>
+        )}
       </footer>
     </div>
   );

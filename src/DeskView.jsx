@@ -6,7 +6,6 @@ import { detect3DSupport } from "./three/support";
 import { useSky } from "./three/useSky";
 import { useChennaiWeather } from "./three/useChennaiWeather";
 import { useReducedMotion } from "./hooks/useReducedMotion";
-import { useHashRoute } from "./hooks/useHashRoute";
 import { MOBILE_QUERY, useMediaQuery } from "./hooks/useMediaQuery";
 import MobileSheet from "./components/MobileSheet";
 import MobileDock from "./components/MobileDock";
@@ -59,7 +58,11 @@ function downloadResume() {
  * and kept as the fallback when WebGL is missing or the 3D chunk fails.
  * Owns the interaction state: hover, the open section (from the URL hash), focus and shortcuts.
  */
-export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
+/**
+ * The 3D desk at "#desk" (overview) and "#desk/<section>". Section routing is owned by the
+ * parent (useViewMode); this component receives the open section and the navigation callbacks.
+ */
+export default function DeskView({ theme, onToggleTheme, section: sectionId, onOpenSection, onDeskOverview, onBackToPortfolio }) {
   const isDark = theme === "dark";
   const reducedMotion = useReducedMotion();
   const isMobile = useMediaQuery(MOBILE_QUERY);
@@ -69,7 +72,6 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const [fallbackMounted, setFallbackMounted] = useState(true);
-  const [hash, navigate] = useHashRoute();
   const [hovered, setHovered] = useState(null);
   const [arrived, setArrived] = useState(null);
   const [hintSeen, setHintSeen] = useState(readHintSeen);
@@ -87,7 +89,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const use3D = supports3D && !failed;
   const onReady = useCallback(() => setReady(true), []);
 
-  const section = sectionById(hash);
+  const section = sectionById(sectionId ?? "");
   const active = section?.object ?? null;
   const panel = section ? PANELS[section.id] : null;
   // Desktop waits for the camera to arrive; phones and the 2D fallback show the section at once.
@@ -112,12 +114,12 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const openSection = useCallback(
     (id) => {
       dismissHint();
-      navigate(id);
+      onOpenSection(id);
     },
-    [navigate, dismissHint],
+    [onOpenSection, dismissHint],
   );
 
-  const goBack = useCallback(() => navigate(""), [navigate]);
+  const goBack = useCallback(() => onDeskOverview(), [onDeskOverview]);
 
   /** Click/Enter on an object: open its section, or run its action. */
   const select = useCallback(
@@ -179,6 +181,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         if (helpOpen) setHelpOpen(false);
         else if (section) goBack();
         else if (seated) setSeated(false);
+        else onBackToPortfolio();
         return;
       }
       if (event.key === "?") {
@@ -186,7 +189,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         return;
       }
       if (event.key === "p" || event.key === "P") {
-        onShowPlain();
+        onBackToPortfolio();
         return;
       }
       const match = SECTIONS.find((s) => s.shortcut === event.key);
@@ -194,7 +197,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [section, helpOpen, seated, goBack, onShowPlain, openSection]);
+  }, [section, helpOpen, seated, goBack, onBackToPortfolio, openSection]);
 
   const PanelContent = panel?.Component;
 
@@ -239,7 +242,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
       {panel && isMobile && (
         <MobileSheet title={section.label} tone={SHEET_TONES[section.id]} onClose={goBack}>
           <section ref={panelRef} tabIndex={-1} aria-label={section.label} className="min-h-full focus:outline-none focus-visible:ring-0">
-            <PanelContent onShowPlain={onShowPlain} weather={weather} />
+            <PanelContent onBackToPortfolio={onBackToPortfolio} weather={weather} />
           </section>
         </MobileSheet>
       )}
@@ -257,7 +260,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
             aria-label={section.label}
             className="h-full w-full overflow-hidden focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
           >
-            {panelVisible && <PanelContent onShowPlain={onShowPlain} weather={weather} />}
+            {panelVisible && <PanelContent onBackToPortfolio={onBackToPortfolio} weather={weather} />}
           </section>
         </div>
       )}
@@ -284,8 +287,8 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         <button type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className={`${chromeButton} px-2.5`}>
           {isDark ? <FaSun size={15} aria-hidden="true" /> : <FaMoon size={15} aria-hidden="true" />}
         </button>
-        <button type="button" onClick={onShowPlain} className={chromeButton}>
-          Recruiter mode
+        <button type="button" onClick={onBackToPortfolio} className={chromeButton}>
+          <FaArrowLeft size={13} aria-hidden="true" /> Back to portfolio
         </button>
       </div>
       {helpOpen && (
@@ -299,9 +302,9 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
               </div>
             ))}
             <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">Esc</kbd></dt>
-            <dd>Back to desk</dd>
+            <dd>Back to desk, or back to the portfolio</dd>
             <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">P</kbd></dt>
-            <dd>Recruiter mode</dd>
+            <dd>Back to portfolio</dd>
             <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">?</kbd></dt>
             <dd>This help</dd>
           </dl>

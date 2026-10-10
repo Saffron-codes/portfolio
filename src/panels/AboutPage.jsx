@@ -5,7 +5,7 @@ import { primaryButton, secondaryButton } from "./panelStyles";
 export const ABOUT_DESIGN = { width: 480, height: 699 };
 
 /** Rendered on the open notebook page. */
-export default function AboutPage({ onShowPlain }) {
+export default function AboutPage({ onBackToPortfolio }) {
   return (
     <div
       className="flex h-full min-h-full w-full flex-col px-7 py-8 text-ink"
@@ -27,8 +27,8 @@ export default function AboutPage({ onShowPlain }) {
         <a href={profile.resume} download className={secondaryButton}>
           <FaDownload size={13} aria-hidden="true" /> Resume
         </a>
-        <button type="button" onClick={onShowPlain} className={secondaryButton}>
-          Recruiter mode
+        <button type="button" onClick={onBackToPortfolio} className={secondaryButton}>
+          Back to portfolio
         </button>
       </div>
     </div>
