@@ -60,7 +60,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const lastObject = useRef(null);
 
   // Chennai time of day (recomputed every minute) and live weather (cached 15 min).
-  const { sky, minute } = useSky();
+  const { sky, hour, minute } = useSky();
   const weather = useChennaiWeather();
 
   const use3D = supports3D && !failed;
@@ -176,6 +176,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
               <Experience
                 theme={theme}
                 sky={sky}
+                hour={hour}
                 minute={minute}
                 weather={weather}
                 reducedMotion={reducedMotion}

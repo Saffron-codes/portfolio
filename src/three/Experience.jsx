@@ -21,24 +21,40 @@ import { consumeShadowFrame, requestShadowUpdate } from "./shadows";
 
 const deg = (d) => (d * Math.PI) / 180;
 
-/** Sun through the window, per time-of-day phase. */
+/**
+ * Sun through the window. Chennai light is strong and white-hot by day; dawn and sunset go
+ * golden; at night a faint blue moonlight. The sun's position follows the Chennai hour so
+ * midday light comes in steeply and morning/evening light rakes across the desk.
+ */
 const SUN = {
-  dawn: { color: "#ffb482", intensity: 1.6, position: [2.4, 1.3, -2.6] },
-  day: { color: "#fff1d6", intensity: 2.2, position: [0.9, 2.7, -2.3] },
-  sunset: { color: "#ff9a5c", intensity: 1.7, position: [-0.6, 1.1, -2.8] },
-  night: { color: "#6f86c4", intensity: 0.12, position: [0.6, 2.4, -2.4] },
+  dawn: { color: "#ffb482", intensity: 1.7 },
+  day: { color: "#fff7ea", intensity: 3.0 },
+  sunset: { color: "#ff9a5c", intensity: 1.8 },
+  night: { color: "#6f86c4", intensity: 0.12 },
 };
+
+/** Sun position for a Chennai hour: rises on the right of the window, peaks high, sets on the left. */
+export function sunPositionFor(hour) {
+  if (hour < 5.5 || hour > 18.5) return [0.6, 2.4, -2.4];
+  const t = (hour - 5.5) / 13; // 0 at dawn → 1 at dusk
+  const elevation = Math.sin(t * Math.PI); // 0 → 1 → 0
+  const x = 2.6 - t * 5.2;
+  const y = 0.9 + elevation * 3.4;
+  return [x, y, -2.4];
+}
 
 /** The sun through the window. Its shadow map is frozen; see shadows.js. */
 function SunLight({ position, intensity, color }) {
   const ref = useRef(null);
+  const key = position.join(",");
   useEffect(() => {
     const light = ref.current;
     if (!light) return;
     light.target.position.set(0, DESK_TOP, 0);
     light.target.updateMatrixWorld();
     requestShadowUpdate(12);
-  }, [position]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return (
     <directionalLight
       ref={ref}
@@ -63,6 +79,16 @@ function SunLight({ position, intensity, color }) {
  * Marks every mesh as a shadow caster/receiver (unless userData.noShadow) and freezes the
  * shadow map so it only re-renders when requested.
  */
+/** Tone-mapping exposure: a touch harsher on a clear Chennai day, softer in the rain. */
+function Exposure({ sky, weather }) {
+  const gl = useThree((state) => state.gl);
+  useEffect(() => {
+    const raining = weather.state === "rain" || weather.state === "thunderstorm";
+    gl.toneMappingExposure = raining ? 0.92 : sky === "day" && weather.state === "clear" ? 1.1 : 1.0;
+  }, [gl, sky, weather]);
+  return null;
+}
+
 function ShadowSetup({ sky, lightsOn }) {
   const scene = useThree((state) => state.scene);
   const gl = useThree((state) => state.gl);
@@ -81,19 +107,30 @@ function ShadowSetup({ sky, lightsOn }) {
   return null;
 }
 
-/** How much the weather dims the sun. */
-const SUN_FACTOR = { clear: 1, cloudy: 0.55, fog: 0.45, rain: 0.35, thunderstorm: 0.3 };
+/** How much the weather dims the direct sun. Overcast stays bright but flat; monsoon rain is dim. */
+function sunFactor(weather) {
+  if (weather.state === "cloudy") return 0.45;
+  if (weather.state === "fog") return 0.4;
+  if (weather.state === "thunderstorm") return 0.12;
+  if (weather.state === "rain") return weather.intensity === "heavy" ? 0.15 : weather.intensity === "light" ? 0.45 : 0.28;
+  return 1;
+}
 
-function Lights({ lightsOn, sky, weather }) {
+function Lights({ lightsOn, sky, weather, hour }) {
   const sun = SUN[sky] ?? SUN.day;
   const isNight = sky === "night";
-  const factor = SUN_FACTOR[weather.state] ?? 1;
-  const sunColor = weather.state === "clear" ? sun.color : "#dfe6ee";
+  const raining = weather.state === "rain" || weather.state === "thunderstorm";
+  const overcast = weather.state === "cloudy" || weather.state === "fog";
+  const factor = sunFactor(weather);
+  const sunColor = weather.state === "clear" ? sun.color : raining ? "#b9c6d6" : "#e9edf1";
+  const position = useMemo(() => sunPositionFor(hour), [hour]);
+  // Overcast light is diffuse: more sky light, less direct sun. Rain is simply dim and cool.
+  const skyLight = isNight ? 0.06 : overcast ? 0.75 : raining ? 0.22 : 0.3;
   return (
     <>
-      <ambientLight intensity={lightsOn ? 0.45 : isNight ? 0.04 : 0.12} color={lightsOn ? "#fff4e0" : "#aab6d6"} />
-      <hemisphereLight args={[isNight ? "#2b3a66" : "#dbeeff", "#8a4a35", lightsOn ? 0.35 : isNight ? 0.06 : 0.15]} />
-      <SunLight position={sun.position} intensity={sun.intensity * factor} color={sunColor} />
+      <ambientLight intensity={lightsOn ? 0.45 : isNight ? 0.04 : raining ? 0.08 : 0.12} color={lightsOn ? "#fff4e0" : "#aab6d6"} />
+      <hemisphereLight args={[isNight ? "#2b3a66" : raining ? "#8c98a6" : overcast ? "#e6eaee" : "#dbeeff", "#8a4a35", lightsOn ? Math.max(0.35, skyLight) : skyLight]} />
+      <SunLight position={position} intensity={sun.intensity * factor} color={sunColor} />
       {/* Room light (off in dark mode) */}
       {lightsOn && <pointLight position={[0.2, 2.45, 0.9]} intensity={2.2} distance={3.6} decay={1.3} color="#ffe6bf" />}
       {/* Screen and keyboard glow onto the desk when the room is dark */}
@@ -184,6 +221,7 @@ export default function Experience({
   theme = "light",
   sky = "day",
   minute = 0,
+  hour = 12,
   weather = CLEAR_WEATHER,
   reducedMotion = false,
   paused = false,
@@ -221,7 +259,8 @@ export default function Experience({
       <SceneContext.Provider value={context}>
         <InteractionContext.Provider value={interaction}>
           <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
-          <Lights lightsOn={lightsOn} sky={sky} weather={weather} />
+          <Lights lightsOn={lightsOn} sky={sky} weather={weather} hour={hour} />
+          <Exposure sky={sky} weather={weather} />
           <RoomEnvironment lightsOn={lightsOn} sky={sky} />
           <Backdrop />
           <Weather />

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
@@ -6,20 +6,28 @@ import { useScene } from "./SceneContext";
 import { seeded } from "./textures";
 
 /** Sky colours per Chennai time-of-day phase (top, bottom). */
+/**
+ * Chennai skies: humid and hazy. Even a clear day fades to a milky white near the horizon,
+ * overcast is bright white rather than gloomy, and monsoon rain is dark slate.
+ */
 export const SKY = {
-  dawn: ["#f6a76f", "#fde0c2"],
-  day: ["#6fb6e6", "#d8ecf7"],
-  sunset: ["#5b4b8a", "#f7a56b"],
+  dawn: ["#f2a46c", "#fde6cf"],
+  day: ["#5aa6dc", "#eaf0f3"],
+  sunset: ["#6a4f8f", "#f8b27a"],
   night: ["#070c1e", "#1e2b55"],
 };
 
+/** Shared with Weather.jsx so lightning can flash the sky. */
+export const skyState = { material: null };
+
 const skyShader = {
-  uniforms: { top: { value: new THREE.Color() }, bottom: { value: new THREE.Color() } },
+  uniforms: { top: { value: new THREE.Color() }, bottom: { value: new THREE.Color() }, flash: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
-    uniform vec3 top; uniform vec3 bottom; varying vec2 vUv;
+    uniform vec3 top; uniform vec3 bottom; uniform float flash; varying vec2 vUv;
     void main(){
       vec3 c = mix(bottom, top, pow(clamp(vUv.y, 0.0, 1.0), 0.75));
+      c = mix(c, vec3(0.92, 0.94, 1.0), flash);
       gl_FragColor = vec4(c, 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
@@ -27,23 +35,30 @@ const skyShader = {
 };
 
 /** Greyer, flatter skies for cloud, rain and fog. */
-export function skyColorsFor(sky, state) {
-  const [top, bottom] = SKY[sky] ?? SKY.day;
-  const grey = sky === "night" ? "#141a2a" : "#8f99a3";
-  const greyLight = sky === "night" ? "#232b40" : "#c7ced4";
-  const mix = (a, b, t) => `#${new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString()}`;
-  if (state === "cloudy") return [mix(top, grey, 0.45), mix(bottom, greyLight, 0.45)];
-  if (state === "rain") return [mix(top, grey, 0.8), mix(bottom, greyLight, 0.8)];
-  if (state === "thunderstorm") return [mix(top, grey, 0.9), mix(bottom, grey, 0.6)];
-  if (state === "fog") return [mix(top, greyLight, 0.7), mix(bottom, greyLight, 0.9)];
-  return [top, bottom];
+export function skyColorsFor(sky, state, intensity = "none") {
+  const night = sky === "night";
+  if (state === "cloudy") return night ? ["#161c2c", "#2a3140"] : ["#c9d0d6", "#eef0f2"];
+  if (state === "fog") return night ? ["#1a1f2a", "#2c323c"] : ["#c6ccd0", "#e3e6e8"];
+  if (state === "rain" || state === "thunderstorm") {
+    const heavy = state === "thunderstorm" || intensity === "heavy";
+    if (night) return heavy ? ["#06080e", "#141a22"] : ["#0a0e16", "#1c222c"];
+    if (heavy) return ["#2e3842", "#5b6671"];
+    return intensity === "light" ? ["#7a8591", "#aab3bc"] : ["#4a5663", "#8b96a1"];
+  }
+  return SKY[sky] ?? SKY.day;
 }
 
-function Sky({ sky, state }) {
+function Sky({ sky, state, intensity }) {
   const material = useMemo(() => new THREE.ShaderMaterial({ ...skyShader, uniforms: THREE.UniformsUtils.clone(skyShader.uniforms) }), []);
-  const [top, bottom] = skyColorsFor(sky, state);
+  const [top, bottom] = skyColorsFor(sky, state, intensity);
   material.uniforms.top.value.set(top);
   material.uniforms.bottom.value.set(bottom);
+  useEffect(() => {
+    skyState.material = material;
+    return () => {
+      if (skyState.material === material) skyState.material = null;
+    };
+  }, [material]);
   return (
     <mesh position={[0.5, 3.5, -7]} material={material} userData={{ noShadow: true }}>
       <planeGeometry args={[30, 14]} />
@@ -74,15 +89,25 @@ const BRANCHES = [
   { rotation: [-0.5, 0, -0.15], position: [-0.03, 1.5, -0.1], length: 0.75 },
 ];
 
-/** Stylised low-poly tree ~3 m behind the window; leaf clusters sway gently. */
+/** How hard the wind blows per weather state (monsoon rain comes with gusts). */
+export function windFor(weather) {
+  if (weather.state === "thunderstorm") return 4;
+  if (weather.state === "rain") return weather.intensity === "heavy" ? 3.2 : weather.intensity === "light" ? 1.6 : 2.4;
+  if (weather.state === "cloudy") return 1.4;
+  return 1;
+}
+
+/** Stylised low-poly tree ~3 m behind the window; leaf clusters sway, harder in monsoon wind. */
 function Tree({ position }) {
-  const { reducedMotion } = useScene();
+  const { reducedMotion, weather } = useScene();
   const leaves = useRef(null);
+  const wind = windFor(weather);
   useFrame(({ clock }) => {
     if (reducedMotion || !leaves.current) return;
     const t = clock.getElapsedTime();
-    leaves.current.rotation.z = Math.sin(t * 0.5) * 0.02;
-    leaves.current.rotation.x = Math.sin(t * 0.35 + 1) * 0.015;
+    const gust = wind > 1.5 ? Math.sin(t * 2.3) * Math.sin(t * 0.7) * 0.5 + 0.5 : 0;
+    leaves.current.rotation.z = Math.sin(t * 0.5 * wind) * 0.02 * wind + gust * 0.03;
+    leaves.current.rotation.x = Math.sin(t * 0.35 * wind + 1) * 0.015 * wind;
   });
   const bark = <meshStandardMaterial color="#5a3a22" roughness={0.9} />;
   return (
@@ -115,12 +140,14 @@ function Tree({ position }) {
 export default function Backdrop() {
   const { sky, isNight, weather } = useScene();
   const overcast = weather.state !== "clear";
+  const wet = weather.state === "rain" || weather.state === "thunderstorm";
   return (
     <group>
-      <Sky sky={sky} state={weather.state} />
+      <Sky sky={sky} state={weather.state} intensity={weather.intensity} />
+      {/* Ground outside: dusty green when dry, dark and glossy when wet */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -0.02, -4]} userData={{ noShadow: true }}>
         <planeGeometry args={[24, 10]} />
-        <meshStandardMaterial color="#6f7d5a" roughness={1} />
+        <meshStandardMaterial color={wet ? "#3f4a3c" : "#7a8460"} roughness={wet ? 0.25 : 1} metalness={wet ? 0.1 : 0} />
       </mesh>
       {/* Low wall / compound line in the distance */}
       <mesh position={[0.5, 0.45, -5.5]} userData={{ noShadow: true }}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getChennaiSkyPhase } from "../lib/chennaiTime";
+import { getChennaiSkyPhase, getChennaiTime } from "../lib/chennaiTime";
 
 const PHASES = ["dawn", "day", "sunset", "night"];
 
@@ -14,14 +14,25 @@ function devOverride() {
  * `minute` is a counter that increments each minute (a cheap dependency for redraws).
  * Dev: `?sky=night` (dawn|day|sunset|night) forces a phase.
  */
+const OVERRIDE_HOUR = { dawn: 6, day: 13, sunset: 18, night: 22 };
+
+function currentHour() {
+  const forced = devOverride();
+  if (forced) return OVERRIDE_HOUR[forced];
+  const { hour, minute } = getChennaiTime();
+  return hour + minute / 60;
+}
+
 export function useSky() {
   const [sky, setSky] = useState(() => devOverride() ?? getChennaiSkyPhase());
+  const [hour, setHour] = useState(currentHour);
   const [minute, setMinute] = useState(0);
 
   useEffect(() => {
     let interval = 0;
     const tick = () => {
       setSky(devOverride() ?? getChennaiSkyPhase());
+      setHour(currentHour());
       setMinute((m) => m + 1);
     };
     const now = new Date();
@@ -36,5 +47,5 @@ export function useSky() {
     };
   }, []);
 
-  return { sky, minute };
+  return { sky, hour, minute };
 }
