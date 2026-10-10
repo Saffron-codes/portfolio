@@ -138,7 +138,7 @@ export default function Keyboard({ name, onSelect, hovered, active, ...props }) 
       </mesh>
       <CoiledCable />
       {/* Skills panel floats above and behind the keys */}
-      <PanelAnchor name={name} width={0.34} height={0.135} position={[0, 0.12, -0.09]} rotation={[-0.45, 0, 0]} />
+      <PanelAnchor name={name} width={0.34} height={0.16} position={[0, 0.13, -0.09]} rotation={[-0.45, 0, 0]} />
     </group>
   );
 }

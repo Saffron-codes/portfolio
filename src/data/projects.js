@@ -2,6 +2,20 @@
 // the UI shows a styled placeholder if it is missing or fails to load.
 const projects = [
   {
+    id: "nomad",
+    title: "Nomad",
+    description:
+      "Cross-platform desktop focus timer for Windows, macOS and Linux. Set work and break lengths, press Start, and it quietly keeps time from the system tray. No accounts, no cloud, no analytics.",
+    stack: ["Tauri", "Rust", "React", "TypeScript", "Zustand", "Tailwind CSS"],
+    links: [
+      { label: "GitHub", url: "https://github.com/Saffron-codes/nomad" },
+      { label: "Download", url: "https://github.com/Saffron-codes/nomad/releases/tag/v1.0.0" },
+    ],
+    // Add public/assets/nomad.webp, then set: image: "/assets/nomad.webp"
+    image: null,
+    badge: "v1.0.0",
+  },
+  {
     id: "svik",
     title: "Svik",
     description:

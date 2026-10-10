@@ -17,7 +17,7 @@ function TileImage({ project, index, featured }) {
   const [failed, setFailed] = useState(!project.image);
   if (failed) {
     return (
-      <div className={`flex h-full w-full flex-col justify-between bg-gradient-to-br p-5 text-white ${GRADIENTS[index % GRADIENTS.length]}`} role="img" aria-label={project.title}>
+      <div className={`flex h-full w-full flex-col justify-between bg-gradient-to-br p-5 text-white ${project.badge ? "pt-14" : ""} ${GRADIENTS[index % GRADIENTS.length]}`} role="img" aria-label={project.title}>
         <span className={`font-neon ${featured ? "text-7xl" : "text-5xl"} leading-none opacity-90`}>{project.title[0]}</span>
         <span className="text-xs font-medium uppercase tracking-[0.2em] opacity-80">{project.stack.slice(0, 3).join(" · ")}</span>
       </div>
@@ -83,7 +83,7 @@ function ProjectTile({ project, index, featured }) {
   );
 }
 
-/** Bento grid: Svik featured, the rest in smaller tiles. */
+/** Bento grid: the first project (Nomad) is featured, the rest are smaller tiles. */
 export default function Projects() {
   return (
     <section id="projects" aria-labelledby="projects-heading" className="scroll-mt-24">

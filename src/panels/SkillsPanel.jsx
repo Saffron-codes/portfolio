@@ -1,6 +1,6 @@
 import skills from "../data/skills";
 
-export const SKILLS_DESIGN = { width: 1120, height: 445 };
+export const SKILLS_DESIGN = { width: 1120, height: 527 };
 
 /** Floats above the keyboard: skill groups as keycap chips. */
 export default function SkillsPanel() {

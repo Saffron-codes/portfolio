@@ -9,7 +9,7 @@ export default function Skills() {
       <SectionHeading index={4} id="skills" title="Skills" lede="The keys I reach for most. A nod to the keyboard on my desk." />
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {skills.map((group, g) => (
-          <Reveal key={group.id} delay={g * 70} group className={`rounded-3xl border border-ink/10 bg-white/60 p-5 dark:border-cream/10 dark:bg-night-800/60 ${g === 3 ? "lg:col-span-2" : ""}`}>
+          <Reveal key={group.id} delay={g * 70} group className={`rounded-3xl border border-ink/10 bg-white/60 p-5 dark:border-cream/10 dark:bg-night-800/60 ${group.id === "backend" ? "lg:col-span-2" : ""}`}>
             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/60 dark:text-cream/60">{group.label}</h3>
             <ul className="mt-4 flex flex-wrap gap-2.5">
               {group.items.map((skill, i) => (
