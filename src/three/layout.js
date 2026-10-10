@@ -15,7 +15,7 @@ export const OBJECTS = [
   { name: "penHolder", position: [-0.5, DESK_TOP, -0.1] },
   { name: "steelTin", position: [-0.52, DESK_TOP, -0.23] },
   { name: "glassesCase", position: [-0.05, DESK_TOP, -0.03] },
-  { name: "earbudsCase", position: [-0.47, DESK_TOP, 0.13] },
+  { name: "earbudsCase", position: [-0.46, DESK_TOP, 0.22] },
   { name: "phone", position: [0.13, DESK_TOP, -0.02], rotation: [0, 0.08, 0] },
   { name: "notebook", position: [-0.38, DESK_TOP, 0.05], rotation: [0, 0.14, 0] },
   { name: "deskpulse", position: [-0.31, DESK_TOP, -0.18] },

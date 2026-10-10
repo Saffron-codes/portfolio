@@ -1,20 +1,46 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { FaMoon, FaSun } from "react-icons/fa6";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FaArrowLeft, FaMoon, FaSun } from "react-icons/fa6";
 import FallbackScene from "./scene/FallbackScene";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { detect3DSupport } from "./three/support";
 import { getChennaiSkyPhase } from "./lib/chennaiTime";
 import { useReducedMotion } from "./hooks/useReducedMotion";
+import { useHashRoute } from "./hooks/useHashRoute";
+import { overlay } from "./three/registry";
+import { LABELS, SECTIONS, sectionById, sectionForObject, TAB_ORDER } from "./three/sections";
+import { keyboardEvents, labelForKey } from "./three/keyboardStore";
+import { PANELS } from "./panels";
+import profile from "./data/profile";
 
 // The 3D bundle (three, R3F, drei) only loads when the device can run it.
 const Experience = lazy(() => import("./three/Experience"));
 
+const HINT_KEY = "desk-hint-seen";
+
 const chromeButton =
-  "inline-flex items-center gap-2 rounded-full border border-ink/15 bg-cream/80 px-3.5 py-1.5 text-sm font-medium text-ink shadow-sm backdrop-blur transition-colors hover:bg-cream dark:border-cream/15 dark:bg-night-800/80 dark:text-cream dark:hover:bg-night-800";
+  "inline-flex items-center gap-2 rounded-full border border-ink/15 bg-cream/80 px-3.5 py-1.5 text-sm font-medium text-ink shadow-sm backdrop-blur transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:border-cream/15 dark:bg-night-800/80 dark:text-cream dark:hover:bg-night-800";
+
+function readHintSeen() {
+  try {
+    return localStorage.getItem(HINT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function downloadResume() {
+  const link = document.createElement("a");
+  link.href = profile.resume;
+  link.download = "";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
 
 /**
  * Home view: the 3D desk when supported, with the 2D SVG scene shown while it loads
  * and kept as the fallback when WebGL is missing or the 3D chunk fails.
+ * Owns the interaction state: hover, the open section (from the URL hash), focus and shortcuts.
  */
 export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const isDark = theme === "dark";
@@ -23,6 +49,15 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const [fallbackMounted, setFallbackMounted] = useState(true);
+  const [hash, navigate] = useHashRoute();
+  const [hovered, setHovered] = useState(null);
+  const [arrived, setArrived] = useState(null);
+  const [hintSeen, setHintSeen] = useState(readHintSeen);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const buttonRefs = useRef({});
+  const panelRef = useRef(null);
+  const lastObject = useRef(null);
+
   // Computed once for now; Phase 6 recomputes every minute with live weather.
   // In dev, `?sky=night` (dawn|day|sunset|night) previews another time of day.
   const sky = useMemo(() => {
@@ -36,6 +71,11 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
   const use3D = supports3D && !failed;
   const onReady = useCallback(() => setReady(true), []);
 
+  const section = sectionById(hash);
+  const active = section?.object ?? null;
+  const panel = section ? PANELS[section.id] : null;
+  const panelVisible = Boolean(section && (use3D ? arrived === active : true));
+
   // Unmount the SVG once the crossfade has finished.
   useEffect(() => {
     if (!ready) return undefined;
@@ -43,15 +83,112 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
     return () => clearTimeout(id);
   }, [ready, reducedMotion]);
 
+  const dismissHint = useCallback(() => {
+    setHintSeen(true);
+    try {
+      localStorage.setItem(HINT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const openSection = useCallback(
+    (id) => {
+      dismissHint();
+      navigate(id);
+    },
+    [navigate, dismissHint],
+  );
+
+  const goBack = useCallback(() => navigate(""), [navigate]);
+
+  /** Click/Enter on an object: open its section, or run its action. */
+  const select = useCallback(
+    (object) => {
+      dismissHint();
+      if (object === "switchboard") {
+        onToggleTheme();
+        return;
+      }
+      if (object === "resumeSheet") {
+        downloadResume();
+        return;
+      }
+      const target = sectionForObject(object);
+      if (target) openSection(target.id);
+    },
+    [dismissHint, onToggleTheme, openSection],
+  );
+
+  const onArrive = useCallback((object) => setArrived(object), []);
+
+  // Keep the overlay registry in sync with the open section.
+  useEffect(() => {
+    overlay.name = active;
+    overlay.design = panel?.design ?? overlay.design;
+    if (!active) setArrived(null);
+  }, [active, panel]);
+
+  // Focus management: into the panel when it opens, back to the object's button when it closes.
+  useEffect(() => {
+    if (panelVisible) {
+      lastObject.current = active;
+      panelRef.current?.focus({ preventScroll: true });
+    } else if (!active && lastObject.current) {
+      buttonRefs.current[lastObject.current]?.focus({ preventScroll: true });
+      lastObject.current = null;
+    }
+  }, [panelVisible, active]);
+
+  // Keyboard shortcuts: 1–8 sections, Esc back, P plain view, ? help. Typing presses 3D keycaps in Skills.
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const tag = event.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || event.target?.isContentEditable) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (section?.id === "skills") {
+        const label = labelForKey(event.key);
+        if (label) keyboardEvents.press(label);
+      }
+      if (event.key === "Escape") {
+        if (helpOpen) setHelpOpen(false);
+        else if (section) goBack();
+        return;
+      }
+      if (event.key === "?") {
+        setHelpOpen((open) => !open);
+        return;
+      }
+      if (event.key === "p" || event.key === "P") {
+        onShowPlain();
+        return;
+      }
+      const match = SECTIONS.find((s) => s.shortcut === event.key);
+      if (match) openSection(match.id);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [section, helpOpen, goBack, onShowPlain, openSection]);
+
+  const PanelContent = panel?.Component;
+
   return (
     <div className="fixed inset-0 overflow-hidden bg-cream dark:bg-night-900">
       {use3D && (
-        <div
-          className={`absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none ${ready ? "opacity-100" : "opacity-0"}`}
-        >
+        <div className={`absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none ${ready ? "opacity-100" : "opacity-0"}`}>
           <ErrorBoundary onError={() => setFailed(true)}>
             <Suspense fallback={null}>
-              <Experience theme={theme} sky={sky} reducedMotion={reducedMotion} onReady={onReady} />
+              <Experience
+                theme={theme}
+                sky={sky}
+                reducedMotion={reducedMotion}
+                hovered={hovered}
+                active={active}
+                onHover={setHovered}
+                onSelect={select}
+                onArrive={onArrive}
+                onReady={onReady}
+              />
             </Suspense>
           </ErrorBoundary>
         </div>
@@ -66,24 +203,95 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
         </div>
       )}
 
-      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-5">
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          aria-pressed={isDark}
-          className={`${chromeButton} px-2.5`}
+      {/* Section panel, pinned to the object's screen by OverlayTracker (3D) or centred (fallback). */}
+      {panel && (
+        <div
+          ref={(el) => {
+            overlay.el = el;
+          }}
+          className={`absolute left-0 top-0 origin-top-left transition-opacity duration-300 ${panelVisible ? "opacity-100" : "pointer-events-none opacity-0"} ${use3D ? "" : "!left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !scale-[0.8]"}`}
+          style={{ width: panel.design.width, height: panel.design.height }}
         >
+          <section
+            ref={panelRef}
+            tabIndex={-1}
+            aria-label={section.label}
+            className="h-full w-full overflow-hidden focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          >
+            {panelVisible && <PanelContent onShowPlain={onShowPlain} />}
+          </section>
+        </div>
+      )}
+
+      {/* Chrome */}
+      <div className="absolute left-4 top-4 sm:left-6 sm:top-5">
+        {section && (
+          <button type="button" onClick={goBack} className={chromeButton}>
+            <FaArrowLeft size={13} aria-hidden="true" /> Back to desk
+          </button>
+        )}
+      </div>
+      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-5">
+        <button type="button" onClick={() => setHelpOpen((open) => !open)} aria-expanded={helpOpen} aria-controls="shortcut-help" aria-label="Keyboard shortcuts" className={`${chromeButton} px-3`}>
+          ?
+        </button>
+        <button type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className={`${chromeButton} px-2.5`}>
           {isDark ? <FaSun size={15} aria-hidden="true" /> : <FaMoon size={15} aria-hidden="true" />}
         </button>
         <button type="button" onClick={onShowPlain} className={chromeButton}>
           Recruiter mode
         </button>
       </div>
+      {helpOpen && (
+        <div id="shortcut-help" role="dialog" aria-label="Keyboard shortcuts" className="absolute right-4 top-16 w-64 rounded-xl border border-ink/10 bg-cream/95 p-4 text-sm text-ink shadow-xl backdrop-blur dark:border-cream/10 dark:bg-night-800/95 dark:text-cream sm:right-6">
+          <p className="mb-2 font-semibold">Shortcuts</p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            {SECTIONS.map((s) => (
+              <div key={s.id} className="contents">
+                <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">{s.shortcut}</kbd></dt>
+                <dd>{s.label}</dd>
+              </div>
+            ))}
+            <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">Esc</kbd></dt>
+            <dd>Back to desk</dd>
+            <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">P</kbd></dt>
+            <dd>Recruiter mode</dd>
+            <dt><kbd className="rounded border border-ink/20 px-1.5 font-mono text-xs dark:border-cream/20">?</kbd></dt>
+            <dd>This help</dd>
+          </dl>
+        </div>
+      )}
 
-      <p className="pointer-events-none absolute bottom-4 left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70">
-        Click anything on the desk ✨
-      </p>
+      {!hintSeen && !section && (
+        <p className="pointer-events-none absolute bottom-4 left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70">
+          Click anything on the desk ✨
+        </p>
+      )}
+
+      {/* Accessible list of the desk objects: canvas objects cannot receive focus themselves. */}
+      <nav aria-label="Desk objects" className="absolute bottom-4 left-4 flex flex-wrap gap-1">
+        {TAB_ORDER.map((object) => (
+          <button
+            key={object}
+            ref={(el) => {
+              buttonRefs.current[object] = el;
+            }}
+            type="button"
+            onClick={() => select(object)}
+            onFocus={() => setHovered(object)}
+            onBlur={() => setHovered((current) => (current === object ? null : current))}
+            className="sr-only rounded-full border border-ink/15 bg-cream/90 px-3 py-1 text-sm font-medium text-ink focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-sage-600 dark:border-cream/15 dark:bg-night-800/90 dark:text-cream"
+          >
+            {object === "switchboard"
+              ? isDark
+                ? "Turn the lights on (switchboard)"
+                : "Turn the lights off (switchboard)"
+              : object === "resumeSheet"
+                ? "Download resume (printed sheet)"
+                : `Open ${LABELS[object].toLowerCase()} (${object === "window" ? "window" : object.replace(/([A-Z])/g, " $1").toLowerCase()})`}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

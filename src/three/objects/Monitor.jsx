@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { makeMonitorWallpaper } from "../textures";
 import { BLACK_PLASTIC } from "../materials";
 import { useScene } from "../SceneContext";
+import PanelAnchor from "../PanelAnchor";
 
 /* eslint-disable no-unused-vars */
 export const MONITOR_SCREEN = { width: 0.485, height: 0.285, center: [0, 0.27, 0.0135] };
@@ -46,6 +47,7 @@ export default function Monitor({ name, onSelect, hovered, active, ...props }) {
           roughness={0.55}
         />
       </mesh>
+      <PanelAnchor name={name} width={s.width} height={s.height} position={[s.center[0], s.center[1], s.center[2] + 0.001]} />
       {/* Power LED */}
       <mesh position={[0.22, 0.125, 0.0135]}>
         <circleGeometry args={[0.0025, 12]} />

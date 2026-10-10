@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { makeEditorScreen, makeLaptopDeck } from "../textures";
 import { SILVER } from "../materials";
 import { useScene } from "../SceneContext";
+import PanelAnchor from "../PanelAnchor";
 
 /* eslint-disable no-unused-vars */
 const BASE = [0.36, 0.018, 0.24];
@@ -66,6 +67,7 @@ export default function Laptop({ name, onSelect, hovered, active, ...props }) {
             <boxGeometry args={LID} />
             <meshStandardMaterial {...SILVER} />
           </mesh>
+          <PanelAnchor name={name} width={LAPTOP_SCREEN.width} height={LAPTOP_SCREEN.height} position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.0015]} />
           <mesh position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.0005]}>
             <planeGeometry args={[LAPTOP_SCREEN.width, LAPTOP_SCREEN.height]} />
             <meshStandardMaterial

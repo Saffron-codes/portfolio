@@ -1,4 +1,5 @@
 import { RoundedBox } from "@react-three/drei";
+import PanelAnchor from "../PanelAnchor";
 
 /* eslint-disable no-unused-vars */
 export const PHONE_SCREEN = { width: 0.069, height: 0.152 };
@@ -12,8 +13,15 @@ export default function Phone({ name, onSelect, hovered, active, ...props }) {
       </RoundedBox>
       <mesh position={[0, 0.0081, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[PHONE_SCREEN.width, PHONE_SCREEN.height]} />
-        <meshStandardMaterial color="#05060a" roughness={0.12} metalness={0.3} />
+        <meshStandardMaterial
+          color={active ? "#e8f3f0" : "#05060a"}
+          emissive={active ? "#e8f3f0" : "#000000"}
+          emissiveIntensity={active ? 0.6 : 0}
+          roughness={0.12}
+          metalness={0.3}
+        />
       </mesh>
+      <PanelAnchor name={name} width={PHONE_SCREEN.width} height={PHONE_SCREEN.height} position={[0, 0.0086, 0]} rotation={[-Math.PI / 2, 0, 0]} />
     </group>
   );
 }

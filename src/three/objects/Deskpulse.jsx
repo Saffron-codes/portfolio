@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { makeDeskpulseScreen } from "../textures";
 import { getChennaiTime } from "../../lib/chennaiTime";
 import { useScene } from "../SceneContext";
+import PanelAnchor from "../PanelAnchor";
 
 /* eslint-disable no-unused-vars */
 const TILT = -0.32;
@@ -32,6 +33,7 @@ export default function Deskpulse({ name, onSelect, hovered, active, ...props })
           <meshStandardMaterial map={screen} emissiveMap={screen} emissive="#ffffff" emissiveIntensity={lightsOn ? 0.6 : 1} roughness={0.3} />
         </mesh>
       </group>
+      <PanelAnchor name={name} width={0.22} height={0.15} position={[0, 0.17, 0.05]} rotation={[-0.25, 0, 0]} />
     </group>
   );
 }

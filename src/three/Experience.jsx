@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { CameraControls, Environment, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 import Room from "./Room";
 import Backdrop from "./Backdrop";
@@ -8,6 +8,11 @@ import Desk from "./objects/Desk";
 import { OBJECT_COMPONENTS } from "./objects";
 import { DESK_TOP, OBJECTS } from "./layout";
 import { DEFAULT_POSE } from "./focus";
+import CameraRig from "./CameraRig";
+import Interactive from "./Interactive";
+import OverlayTracker from "./OverlayTracker";
+import { InteractionContext } from "./InteractionContext";
+import { isInteractive, LABELS } from "./sections";
 import { SceneContext } from "./SceneContext";
 import { consumeShadowFrame, requestShadowUpdate } from "./shadows";
 
@@ -20,39 +25,6 @@ const SUN = {
   sunset: { color: "#ff9a5c", intensity: 1.7, position: [-0.6, 1.1, -2.8] },
   night: { color: "#6f86c4", intensity: 0.12, position: [0.6, 2.4, -2.4] },
 };
-
-function Controls() {
-  const ref = useRef(null);
-  const scene = useThree((state) => state.scene);
-  const gl = useThree((state) => state.gl);
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      window.__scene = scene;
-      window.__gl = gl;
-    }
-    const controls = ref.current;
-    if (!controls) return;
-    const { position, target } = DEFAULT_POSE;
-    controls.setLookAt(...position, ...target, false);
-    // Dev aid: lets screenshots be taken from other poses (e.g. the photo's front view).
-    if (import.meta.env.DEV) window.__cameraControls = controls;
-  }, []);
-  return (
-    <CameraControls
-      ref={ref}
-      makeDefault
-      minAzimuthAngle={-deg(25)}
-      maxAzimuthAngle={deg(25)}
-      minPolarAngle={deg(55)}
-      maxPolarAngle={deg(88)}
-      minDistance={1.2}
-      maxDistance={2.2}
-      truckSpeed={0}
-      dollySpeed={0.4}
-      smoothTime={0.4}
-    />
-  );
-}
 
 /** The sun through the window. Its shadow map is frozen; see shadows.js. */
 function SunLight({ position, intensity, color }) {
@@ -140,12 +112,31 @@ function RoomEnvironment({ lightsOn, sky }) {
   );
 }
 
-function Objects() {
+const LABEL_OFFSETS = {
+  monitor: [0, 0.5, 0],
+  laptop: [0, 0.36, 0],
+  keyboard: [0, 0.12, 0],
+  phone: [0, 0.1, 0],
+  notebook: [0, 0.1, 0],
+  deskpulse: [0, 0.15, 0],
+  certificate: [0, 0.17, 0.05],
+  resumeSheet: [0, 0.2, 0.05],
+  switchboard: [0, 0.09, 0.05],
+};
+
+function Objects({ hovered, active }) {
   return (
     <>
       {OBJECTS.map(({ name, position, rotation }) => {
         const Component = OBJECT_COMPONENTS[name];
-        return <Component key={name} name={name} position={position} rotation={rotation} />;
+        if (!isInteractive(name)) {
+          return <Component key={name} name={name} position={position} rotation={rotation} />;
+        }
+        return (
+          <Interactive key={name} name={name} label={LABELS[name]} labelOffset={LABEL_OFFSETS[name]} position={position} rotation={rotation}>
+            <Component name={name} hovered={hovered === name} active={active === name} />
+          </Interactive>
+        );
       })}
     </>
   );
@@ -181,12 +172,27 @@ function useTabVisible() {
  * The 3D desk: Canvas, camera, lights and every object. Loaded lazily by DeskView.
  * Units are metres; see layout.js.
  */
-export default function Experience({ theme = "light", sky = "day", reducedMotion = false, paused = false, onReady }) {
+export default function Experience({
+  theme = "light",
+  sky = "day",
+  reducedMotion = false,
+  paused = false,
+  hovered = null,
+  active = null,
+  onHover,
+  onSelect,
+  onArrive,
+  onReady,
+}) {
   const visible = useTabVisible();
   const lightsOn = theme !== "dark";
   const context = useMemo(
     () => ({ theme, lightsOn, sky, isNight: sky === "night", reducedMotion }),
     [theme, lightsOn, sky, reducedMotion],
+  );
+  const interaction = useMemo(
+    () => ({ hovered, active, setHovered: onHover ?? (() => {}), select: onSelect ?? (() => {}) }),
+    [hovered, active, onHover, onSelect],
   );
 
   return (
@@ -203,16 +209,19 @@ export default function Experience({ theme = "light", sky = "day", reducedMotion
       }}
     >
       <SceneContext.Provider value={context}>
-        <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
-        <Lights lightsOn={lightsOn} sky={sky} />
-        <RoomEnvironment lightsOn={lightsOn} sky={sky} />
-        <Backdrop />
-        <Room />
-        <Desk />
-        <Objects />
-        <ShadowSetup sky={sky} lightsOn={lightsOn} />
-        <Controls />
-        <Ready onReady={onReady} />
+        <InteractionContext.Provider value={interaction}>
+          <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
+          <Lights lightsOn={lightsOn} sky={sky} />
+          <RoomEnvironment lightsOn={lightsOn} sky={sky} />
+          <Backdrop />
+          <Room />
+          <Desk />
+          <Objects hovered={hovered} active={active} />
+          <ShadowSetup sky={sky} lightsOn={lightsOn} />
+          <CameraRig active={active} onArrive={onArrive} />
+          <OverlayTracker />
+          <Ready onReady={onReady} />
+        </InteractionContext.Provider>
       </SceneContext.Provider>
     </Canvas>
   );

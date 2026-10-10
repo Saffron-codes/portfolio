@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Line } from "@react-three/drei";
 import { makeCertificate } from "../textures";
 import education from "../../data/education";
+import PanelAnchor from "../PanelAnchor";
 
 /* eslint-disable no-unused-vars */
 const W = 0.3;
@@ -35,6 +36,7 @@ export default function Certificate({ name, onSelect, hovered, active, ...props 
         <planeGeometry args={[W - T * 2 + 0.004, H - T * 2 + 0.004]} />
         <meshStandardMaterial map={paper} roughness={0.9} />
       </mesh>
+      <PanelAnchor name={name} width={W - T * 2 + 0.004} height={H - T * 2 + 0.004} position={[0, 0, 0.0125]} />
       {/* Hanging string */}
       <Line points={[[0, HOOK_ABOVE, 0.004], [-W / 2 + 0.03, H / 2 - 0.01, 0.004]]} color="#444" lineWidth={1} />
       <Line points={[[0, HOOK_ABOVE, 0.004], [W / 2 - 0.03, H / 2 - 0.01, 0.004]]} color="#444" lineWidth={1} />

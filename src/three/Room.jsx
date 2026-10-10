@@ -2,6 +2,9 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { Instance, Instances } from "@react-three/drei";
 import { BACK_WALL_Z, LEFT_WALL_X } from "./layout";
+import Interactive from "./Interactive";
+import PanelAnchor from "./PanelAnchor";
+import { LABELS } from "./sections";
 
 const WALL = { color: "#e9e6ae", roughness: 0.95 };
 const WALL_T = 0.1;
@@ -117,10 +120,12 @@ function WindowFrame() {
         ))}
       </Instances>
       {/* Mosquito mesh */}
-      <mesh position={[WCX, WCY, -0.05]} userData={{ noShadow: true }}>
+      <mesh position={[WCX, WCY, -0.05]} userData={{ noShadow: true, noHighlight: true }}>
         <planeGeometry args={[WW - frame * 2, WH - frame * 2]} />
         <meshStandardMaterial color="#1a1a1a" transparent opacity={0.18} roughness={1} side={THREE.DoubleSide} />
       </mesh>
+      {/* "Chennai now" card sits on the glass, right of the monitor */}
+      <PanelAnchor name="window" width={0.9} height={0.54} position={[WCX + 0.2, WCY + 0.08, 0.05]} />
     </group>
   );
 }
@@ -160,7 +165,9 @@ export default function Room() {
         <meshStandardMaterial color="#bdbdbd" metalness={0.8} roughness={0.3} />
       </mesh>
 
-      <WindowFrame />
+      <Interactive name="window" label={LABELS.window} labelOffset={[WCX + 0.25, WINDOW.y1 - 0.2, BACK_WALL_Z]}>
+        <WindowFrame />
+      </Interactive>
 
     </group>
   );
