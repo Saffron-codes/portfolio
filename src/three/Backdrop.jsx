@@ -83,7 +83,7 @@ const LEAF_CLUSTERS = (() => {
     clusters.push({
       position: [Math.cos(angle) * spread, 1.5 + rand() * 1.4, Math.sin(angle) * spread * 0.7],
       radius: 0.36 + rand() * 0.34,
-      color: i % 3 === 0 ? "#4f8a3c" : i % 3 === 1 ? "#6aa84f" : "#3f7a35",
+      color: i % 3 === 0 ? "#3f7a35" : i % 3 === 1 ? "#55923f" : "#2f6a2c",
       phase: rand() * Math.PI * 2,
     });
   }
@@ -106,7 +106,7 @@ export function windFor(weather) {
 }
 
 /** Stylised low-poly tree ~3 m behind the window; leaf clusters sway, harder in monsoon wind. */
-function Tree({ position }) {
+function Tree({ position, scale = 1 }) {
   const { reducedMotion, weather } = useScene();
   const leaves = useRef(null);
   const wind = windFor(weather);
@@ -119,9 +119,9 @@ function Tree({ position }) {
   });
   const bark = <meshStandardMaterial color="#5a3a22" roughness={0.9} />;
   return (
-    <group position={position}>
+    <group position={position} scale={scale}>
       <mesh position={[0, 0.9, 0]} userData={{ noShadow: true }}>
-        <cylinderGeometry args={[0.09, 0.14, 1.8, 8]} />
+        <cylinderGeometry args={[0.11, 0.17, 1.8, 8]} />
         {bark}
       </mesh>
       {BRANCHES.map((branch, i) => (
@@ -204,15 +204,18 @@ export default function Backdrop() {
       {/* Ground outside: dusty green when dry, dark and glossy when wet */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -0.02, -4]} userData={{ noShadow: true }}>
         <planeGeometry args={[24, 10]} />
-        <meshStandardMaterial color={wet ? "#3f4a3c" : "#7a8460"} roughness={wet ? 0.25 : 1} metalness={wet ? 0.1 : 0} />
+        <meshStandardMaterial color={wet ? "#4a4538" : "#9a8c5e"} roughness={wet ? 0.25 : 1} metalness={wet ? 0.1 : 0} />
       </mesh>
-      {/* Low wall / compound line in the distance */}
-      <mesh position={[0.5, 0.45, -5.5]} userData={{ noShadow: true }}>
-        <boxGeometry args={[24, 0.9, 0.2]} />
-        <meshStandardMaterial color="#c9b9a2" roughness={1} />
-      </mesh>
-      <Tree position={[0.95, 0, -2.9]} />
-      <Tree position={[-1.6, 0, -4.2]} />
+      {/* Empty land: a mango tree close to the window, a couple of smaller trees and shrubs beyond */}
+      <Tree position={[0.9, 0, -2.4]} scale={1.15} />
+      <Tree position={[-1.4, 0, -5.5]} scale={0.7} />
+      <Tree position={[3.6, 0, -6.2]} scale={0.6} />
+      {[[-0.6, -3.2], [2.2, -3.6], [1.4, -5.0], [-2.4, -3.9]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.22, z]} userData={{ noShadow: true }}>
+          <icosahedronGeometry args={[0.28 + (i % 2) * 0.1, 0]} />
+          <meshStandardMaterial color={i % 2 ? "#6f8f4a" : "#86a35a"} roughness={0.95} flatShading />
+        </mesh>
+      ))}
       {/* Pink-red sunshade slab across the top outside the window */}
       <mesh position={[0.56, 1.72, -0.9]} rotation={[0.3, 0, 0]} userData={{ noShadow: true }}>
         <boxGeometry args={[2.0, 0.03, 1.1]} />

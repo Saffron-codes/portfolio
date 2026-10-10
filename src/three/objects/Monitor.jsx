@@ -16,17 +16,21 @@ export default function Monitor({ name, onSelect, hovered, active, ...props }) {
   return (
     <group name={name} {...props}>
       {/* Stand hub + V legs */}
-      <mesh position={[0, 0.0075, 0]} castShadow>
-        <cylinderGeometry args={[0.03, 0.034, 0.015, 24]} />
+      <mesh position={[0, 0.009, -0.004]} castShadow>
+        <cylinderGeometry args={[0.024, 0.028, 0.018, 24]} />
         <meshStandardMaterial {...BLACK_PLASTIC} />
       </mesh>
-      {/* Inverted V: the two legs meet under the stem and spread back toward the wall */}
+      {/* Flat V plate: the two arms meet at the stem and reach back at 35°, staying on the desk */}
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 0.055, 0.006, -0.075]} rotation={[0, side * 0.62, 0]} castShadow>
-          <boxGeometry args={[0.022, 0.012, 0.19]} />
-          <meshStandardMaterial {...BLACK_PLASTIC} />
+        <mesh key={side} position={[side * 0.037, 0.005, -0.052]} rotation={[0, side * 0.61, 0]} castShadow>
+          <boxGeometry args={[0.034, 0.01, 0.13]} />
+          <meshStandardMaterial {...BLACK_PLASTIC} roughness={0.45} />
         </mesh>
       ))}
+      <mesh position={[0, 0.005, -0.1]} castShadow>
+        <boxGeometry args={[0.03, 0.01, 0.03]} />
+        <meshStandardMaterial {...BLACK_PLASTIC} roughness={0.45} />
+      </mesh>
       {/* Neck */}
       <mesh position={[0, 0.075, -0.004]} castShadow>
         <boxGeometry args={[0.03, 0.13, 0.014]} />

@@ -32,6 +32,55 @@ export function seeded(seed) {
   };
 }
 
+/** Fine mosquito net: a repeating grid of thin threads on a transparent background. */
+export function makeNetTexture() {
+  const texture = makeTexture(64, 64, (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(60,60,60,0.9)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < w; i += 4) {
+      ctx.beginPath();
+      ctx.moveTo(i + 0.5, 0);
+      ctx.lineTo(i + 0.5, h);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i + 0.5);
+      ctx.lineTo(w, i + 0.5);
+      ctx.stroke();
+    }
+  });
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  return texture;
+}
+
+/** Floral cloth (curtains, bedsheet): a base colour with soft paisley/leaf shapes. */
+export function makeFloralTexture(base, accent, accent2, seed = 9) {
+  const texture = makeTexture(256, 256, (ctx, w, h) => {
+    const rand = seeded(seed);
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26; i += 1) {
+      ctx.save();
+      ctx.translate(rand() * w, rand() * h);
+      ctx.rotate(rand() * Math.PI * 2);
+      ctx.fillStyle = i % 3 ? accent : accent2;
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      const size = 10 + rand() * 18;
+      ctx.moveTo(0, -size);
+      ctx.bezierCurveTo(size, -size * 0.6, size * 0.8, size * 0.8, 0, size);
+      ctx.bezierCurveTo(-size * 0.8, size * 0.8, -size, -size * 0.6, 0, -size);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
 /** Monitor idle wallpaper: moody grey sky, dark sea, white surf line, black-sand beach, dock bar. */
 export function makeMonitorWallpaper() {
   return makeTexture(1024, 614, (ctx, w, h) => {
@@ -153,7 +202,7 @@ export function makeEditorScreen() {
 /** Silver laptop deck with a key grid and touchpad. */
 export function makeLaptopDeck() {
   return makeTexture(720, 480, (ctx, w, h) => {
-    ctx.fillStyle = "#c9ccd1";
+    ctx.fillStyle = "#c3c6cb";
     ctx.fillRect(0, 0, w, h);
     const cols = 15;
     const rows = 5;
@@ -165,8 +214,11 @@ export function makeLaptopDeck() {
         const wide = r === rows - 1 && c > 3 && c < 9;
         if (r === rows - 1 && c > 4 && c < 9) continue;
         roundRect(ctx, x0 + c * (keyW + 4), 30 + r * (keyH + 4), wide ? keyW * 5 + 16 : keyW, keyH, 5);
-        ctx.fillStyle = "#b1b5bb";
+        ctx.fillStyle = "#d9dce1";
         ctx.fill();
+        ctx.strokeStyle = "#a9adb3";
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
     }
     roundRect(ctx, w / 2 - 95, 250, 190, 120, 10);

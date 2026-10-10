@@ -67,8 +67,22 @@ export default function Laptop({ name, onSelect, hovered, active, ...props }) {
             <boxGeometry args={LID} />
             <meshStandardMaterial {...SILVER} />
           </mesh>
-          <PanelAnchor name={name} width={LAPTOP_SCREEN.width} height={LAPTOP_SCREEN.height} position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.0015]} />
-          <mesh position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.0005]}>
+          {/* Black bezel with a slightly deeper chin, and the webcam dot */}
+          <mesh position={[0, LID[1] / 2 + 0.002, LID[2] / 2 + 0.0003]}>
+            <planeGeometry args={[0.35, 0.216]} />
+            <meshStandardMaterial color="#111214" roughness={0.6} />
+          </mesh>
+          <mesh position={[0, LID[1] - 0.007, LID[2] / 2 + 0.0006]}>
+            <circleGeometry args={[0.0015, 10]} />
+            <meshStandardMaterial color="#000" roughness={0.3} />
+          </mesh>
+          {/* Hinge bar */}
+          <mesh position={[0, 0.004, -0.004]}>
+            <boxGeometry args={[0.3, 0.012, 0.014]} />
+            <meshStandardMaterial color="#2b2d31" roughness={0.5} metalness={0.3} />
+          </mesh>
+          <PanelAnchor name={name} width={LAPTOP_SCREEN.width} height={LAPTOP_SCREEN.height} position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.002]} />
+          <mesh position={[0, LID[1] / 2 + 0.004, LID[2] / 2 + 0.0009]}>
             <planeGeometry args={[LAPTOP_SCREEN.width, LAPTOP_SCREEN.height]} />
             <meshStandardMaterial
               map={editor}

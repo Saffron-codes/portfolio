@@ -7,13 +7,14 @@ import { useScene } from "./SceneContext";
 
 const deg = (d) => (d * Math.PI) / 180;
 
+// Asymmetric: the left wall is close, the right side of the room (door, shelf, bed) is worth a look.
 const LIMITS = {
-  minAzimuthAngle: -deg(25),
-  maxAzimuthAngle: deg(25),
+  minAzimuthAngle: -deg(22),
+  maxAzimuthAngle: deg(42),
   minPolarAngle: deg(55),
   maxPolarAngle: deg(88),
   minDistance: 1.2,
-  maxDistance: 2.2,
+  maxDistance: 2.3,
 };
 
 const { ACTION } = CameraControlsImpl;
