@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import { CameraControls } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { DEFAULT_POSE, MOBILE_POSE, poseFor } from "./focus";
@@ -7,21 +8,37 @@ import { useScene } from "./SceneContext";
 
 const deg = (d) => (d * Math.PI) / 180;
 
-// Asymmetric: the left wall is close, the right side of the room (door, shelf, bed) is worth a look.
+/**
+ * Look-around mode: the camera stands behind the chair and turns in place (the orbit pivot is
+ * 12 cm in front of the lens, so turning never moves it through a wall). Full 360° yaw, from
+ * the ceiling fan down to the floor. The wheel zooms the lens instead of walking.
+ */
+const LOOK_DISTANCE = 0.12;
 const LIMITS = {
-  minAzimuthAngle: -deg(22),
-  maxAzimuthAngle: deg(42),
-  minPolarAngle: deg(55),
-  maxPolarAngle: deg(88),
-  minDistance: 1.2,
-  maxDistance: 2.3,
+  minAzimuthAngle: -Infinity,
+  maxAzimuthAngle: Infinity,
+  // Polar is measured on the camera's offset from the pivot: small = camera above it (looking
+  // down at the floor), large = camera below it (looking up at the ceiling).
+  minPolarAngle: deg(14),
+  maxPolarAngle: deg(172),
+  minDistance: LOOK_DISTANCE,
+  maxDistance: LOOK_DISTANCE,
+  minZoom: 1,
+  maxZoom: 2,
 };
+
+/** Same view direction as `pose`, but with the pivot just in front of the camera. */
+function lookPose(pose) {
+  const position = new THREE.Vector3(...pose.position);
+  const direction = new THREE.Vector3(...pose.target).sub(position).normalize();
+  return { position: pose.position, target: position.addScaledVector(direction, LOOK_DISTANCE).toArray() };
+}
 
 const { ACTION } = CameraControlsImpl;
 const NONE = ACTION.NONE;
 const DEFAULT_INPUT = {
-  mouseButtons: { left: ACTION.ROTATE, middle: ACTION.DOLLY, right: NONE, wheel: ACTION.DOLLY },
-  touches: { one: ACTION.TOUCH_ROTATE, two: ACTION.TOUCH_DOLLY, three: NONE },
+  mouseButtons: { left: ACTION.ROTATE, middle: NONE, right: NONE, wheel: ACTION.ZOOM },
+  touches: { one: ACTION.TOUCH_ROTATE, two: ACTION.TOUCH_ZOOM, three: NONE },
 };
 
 /** Disable user input while a section is open. (controls.enabled=false would also freeze flights.) */
@@ -52,12 +69,13 @@ function wrapAzimuth(controls) {
 }
 
 function applyLimits(controls, relaxed) {
-  controls.minAzimuthAngle = relaxed ? -Infinity : LIMITS.minAzimuthAngle;
-  controls.maxAzimuthAngle = relaxed ? Infinity : LIMITS.maxAzimuthAngle;
+  controls.minAzimuthAngle = -Infinity;
+  controls.maxAzimuthAngle = Infinity;
   controls.minPolarAngle = relaxed ? 0 : LIMITS.minPolarAngle;
   controls.maxPolarAngle = relaxed ? Math.PI : LIMITS.maxPolarAngle;
   controls.minDistance = relaxed ? 0.05 : LIMITS.minDistance;
   controls.maxDistance = relaxed ? 10 : LIMITS.maxDistance;
+  if (relaxed) controls.zoomTo(1, false);
 }
 
 /**
@@ -75,7 +93,8 @@ export default function CameraRig({ active, onArrive, fixed = false }) {
   useEffect(() => {
     const controls = ref.current;
     if (!controls) return;
-    controls.setLookAt(...DEFAULT_POSE.position, ...DEFAULT_POSE.target, false);
+    const start = lookPose(DEFAULT_POSE);
+    controls.setLookAt(...start.position, ...start.target, false);
     wrapAzimuth(controls);
     lockInput(controls, false);
     if (import.meta.env.DEV) {
@@ -92,7 +111,7 @@ export default function CameraRig({ active, onArrive, fixed = false }) {
     const animate = !reducedMotion;
     controls.smoothTime = animate ? 0.55 : 0;
 
-    const pose = active ? poseFor(active) : fixed ? MOBILE_POSE : DEFAULT_POSE;
+    const pose = active ? poseFor(active) : lookPose(fixed ? MOBILE_POSE : DEFAULT_POSE);
     if (!pose) return undefined;
 
     applyLimits(controls, Boolean(active));
@@ -136,5 +155,17 @@ export default function CameraRig({ active, onArrive, fixed = false }) {
     controls.rotate(delta, 0, false);
   });
 
-  return <CameraControls ref={ref} makeDefault {...LIMITS} truckSpeed={0} dollySpeed={0.4} smoothTime={0.4} />;
+  return (
+    <CameraControls
+      ref={ref}
+      makeDefault
+      {...LIMITS}
+      truckSpeed={0}
+      dollySpeed={0}
+      // Negative: drag right looks right, like turning your head.
+      azimuthRotateSpeed={-0.55}
+      polarRotateSpeed={-0.55}
+      smoothTime={0.4}
+    />
+  );
 }

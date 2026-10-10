@@ -292,7 +292,7 @@ export default function DeskView({ theme, onToggleTheme, onShowPlain }) {
 
       {!hintSeen && !section && (
         <p className={`pointer-events-none absolute left-0 right-0 text-center text-sm text-ink/70 dark:text-cream/70 ${isMobile ? "bottom-20" : "bottom-4"}`}>
-          {isMobile ? "Tap anything on the desk ✨" : "Click anything on the desk ✨"}
+          {isMobile ? "Tap anything on the desk ✨" : "Click anything on the desk · drag to look around ✨"}
         </p>
       )}
 
