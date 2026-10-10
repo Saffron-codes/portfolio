@@ -2,7 +2,7 @@ import profile from "../../data/profile";
 
 export default function Footer({ onOpenDesk }) {
   return (
-    <footer className="border-t border-ink/10 py-8 text-center text-xs text-ink/60 dark:border-cream/10 dark:text-cream/60">
+    <footer className="border-t border-ink/10 py-8 text-center text-sm text-ink/70 dark:border-cream/10 dark:text-cream/70">
       <p>
         © {new Date().getFullYear()} {profile.name} · Built with React &amp; Three.js
       </p>

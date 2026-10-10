@@ -283,8 +283,32 @@ export default function Experience({
 }) {
   const visible = useTabVisible();
   const lightsOn = theme !== "dark";
-  // Pixel ratio: start high, let PerformanceMonitor drop it on slow devices.
-  const [dpr, setDpr] = useState(preview ? 1 : mobile ? 1.5 : 1.75);
+  // Pixel ratio: capped, re-read when the window's devicePixelRatio changes (zoom, other screen),
+  // and lowered by PerformanceMonitor on slow devices.
+  const dprCap = preview ? 1 : mobile ? 1.5 : 1.75;
+  const [dpr, setDpr] = useState(() => Math.min(window.devicePixelRatio || 1, dprCap));
+  useEffect(() => {
+    let media = null;
+    const onChange = () => {
+      setDpr(Math.min(window.devicePixelRatio || 1, dprCap));
+      media?.removeEventListener("change", onChange);
+      listen();
+    };
+    const listen = () => {
+      try {
+        media = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+        media.addEventListener("change", onChange);
+      } catch {
+        media = null;
+      }
+    };
+    listen();
+    window.addEventListener("resize", onChange);
+    return () => {
+      media?.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+    };
+  }, [dprCap]);
   // The loop stays off until shaders are compiled; the 2D scene covers the wait.
   const [compiled, setCompiled] = useState(false);
   const onCompiled = useCallback(() => setCompiled(true), []);
@@ -313,7 +337,7 @@ export default function Experience({
     >
       <SceneContext.Provider value={context}>
         <InteractionContext.Provider value={interaction}>
-          {!preview && <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(mobile ? 1.5 : 1.75)} flipflops={2} onFallback={() => setDpr(1)} />}
+          {!preview && <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(Math.min(window.devicePixelRatio || 1, dprCap))} flipflops={2} onFallback={() => setDpr(1)} />}
           <color attach="background" args={[lightsOn ? "#e9e6ae" : "#0d1020"]} />
           <Lights lightsOn={lightsOn} sky={sky} weather={weather} hour={hour} />
           <Exposure sky={sky} weather={weather} />
@@ -321,7 +345,7 @@ export default function Experience({
           <Backdrop />
           <Weather />
           <Atmosphere />
-          <Room />
+          <Room lite={preview} />
           <Desk />
           <Objects hovered={hovered} active={active} seated={seated} />
           <ShadowSetup sky={sky} lightsOn={lightsOn} />

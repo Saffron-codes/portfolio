@@ -14,18 +14,46 @@ const prefetchExperience = () => import("../three/Experience");
 
 const EXPAND_MS = 600;
 
-function useIdle(timeout = 1500) {
-  const [idle, setIdle] = useState(false);
+/**
+ * True once the page has settled: at least `minDelay` ms after mount AND the browser reports
+ * idle time. On phones a scroll or touch is also required first. Booting the 3D scene is the
+ * single heaviest thing this page does, so it must stay out of the initial load entirely.
+ */
+function useSettled({ minDelay = 7000, needInteraction = false } = {}) {
+  const [settled, setSettled] = useState(false);
   useEffect(() => {
-    const done = () => setIdle(true);
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(done, { timeout });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = setTimeout(done, timeout);
-    return () => clearTimeout(id);
-  }, [timeout]);
-  return idle;
+    let cancelled = false;
+    let idleId = 0;
+    let timer = 0;
+    let interacted = !needInteraction;
+    const events = ["pointerdown", "touchstart", "scroll", "keydown", "wheel"];
+    const onInteract = () => {
+      interacted = true;
+      events.forEach((e) => window.removeEventListener(e, onInteract));
+      maybeFinish();
+    };
+    let delayed = false;
+    const finish = () => {
+      if (!cancelled) setSettled(true);
+    };
+    const maybeFinish = () => {
+      if (!delayed || !interacted) return;
+      if ("requestIdleCallback" in window) idleId = window.requestIdleCallback(finish, { timeout: 3000 });
+      else finish();
+    };
+    timer = setTimeout(() => {
+      delayed = true;
+      maybeFinish();
+    }, minDelay);
+    if (needInteraction) events.forEach((e) => window.addEventListener(e, onInteract, { passive: true, once: true }));
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (idleId && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      events.forEach((e) => window.removeEventListener(e, onInteract));
+    };
+  }, [minDelay, needInteraction]);
+  return settled;
 }
 
 function useTabVisible() {
@@ -54,7 +82,7 @@ export default function DeskCard({ theme, sky, hour, minute, weather, onOpenDesk
   const reducedMotion = useReducedMotion();
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const supports3D = useMemo(detect3DSupport, []);
-  const idle = useIdle();
+  const idle = useSettled({ minDelay: 7000, needInteraction: isMobile });
   const tabVisible = useTabVisible();
   const card = useRef(null);
   const [onScreen, setOnScreen] = useState(false);
@@ -160,7 +188,7 @@ export default function DeskCard({ theme, sky, hour, minute, weather, onOpenDesk
           onClick={open}
           onMouseEnter={supports3D ? prefetchExperience : undefined}
           onFocus={supports3D ? prefetchExperience : undefined}
-          aria-label={supports3D ? "Explore my desk in 3D" : "See my desk as an illustration"}
+          aria-label={supports3D ? "Step inside: explore my desk in 3D" : "Step inside: see my desk as an illustration"}
           className="absolute inset-0 z-20 flex items-end justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sage-400/70"
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-cream px-4 py-2 text-sm font-semibold text-ink shadow-lg transition-transform duration-300 ease-out motion-reduce:transition-none group-hover:translate-x-1">

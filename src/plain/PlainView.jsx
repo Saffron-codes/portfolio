@@ -62,6 +62,12 @@ export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor,
     <div className="portfolio-page relative min-h-screen overflow-x-clip bg-cream text-ink dark:bg-night-900 dark:text-cream">
       <a
         href="#main"
+        onClick={(event) => {
+          event.preventDefault();
+          const main = document.getElementById("main");
+          main?.focus({ preventScroll: true });
+          main?.scrollIntoView({ behavior: "auto", block: "start" });
+        }}
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-sage-600 focus:px-3 focus:py-2 focus:text-white"
       >
         Skip to content
@@ -69,7 +75,7 @@ export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor,
 
       <Navbar sections={SECTIONS} activeId={activeId} theme={theme} onToggleTheme={onToggleTheme} onNavigate={scrollTo} onHome={scrollTop} />
 
-      <main id="main" className="relative mx-auto flex max-w-6xl flex-col gap-24 px-4 pb-24 sm:px-6">
+      <main id="main" tabIndex={-1} className="relative mx-auto flex max-w-6xl flex-col gap-24 px-4 pb-24 outline-none sm:px-6">
         <Background />
         <Hero theme={theme} sky={sky} hour={hour} minute={minute} weather={weather} onOpenDesk={onOpenDesk} />
         <Experience />

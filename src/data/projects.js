@@ -21,7 +21,8 @@ const projects = [
       "AI-powered tool that generates small to intermediate electronic circuits from text prompts.",
     stack: ["PostgreSQL", "Express.js", "React", "Node.js", "OpenAI GPT"],
     links: [{ label: "Live", url: "https://acb-u0bu.onrender.com/" }],
-    image: "/assets/ai-circuit-builder.webp",
+    // Add public/assets/ai-circuit-builder.webp, then set: image: "/assets/ai-circuit-builder.webp"
+    image: null,
   },
   {
     id: "note-warden",
@@ -41,7 +42,8 @@ const projects = [
     // TODO: confirm the real stack for Deskpulse.
     stack: ["Embedded", "IoT"],
     links: [{ label: "GitHub", url: "https://github.com/Saffron-codes/deskpulse" }],
-    image: "/assets/deskpulse.webp",
+    // Add public/assets/deskpulse.webp, then set: image: "/assets/deskpulse.webp"
+    image: null,
   },
   {
     id: "love-calculator",

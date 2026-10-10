@@ -6,7 +6,7 @@
     <title>Saffron Dionysius T, Software Engineer</title>
     <meta
       name="description"
-      content="Software Engineer with 3 years of experience building cross-platform mobile apps in Flutter and Dart, with FastAPI backends on PostgreSQL and Supabase. Based in Chennai, India."
+      content="Software Engineer with 3 years of experience building cross-platform mobile apps in Flutter and Dart, with FastAPI backends on PostgreSQL and Supabase. Based in Chennai, India. Step inside a live 3D model of my desk."
     />
     <link rel="canonical" href="https://sddev.netlify.app/" />
     <link rel="icon" type="image/jpeg" href="/assets/favicon.jpg" />
@@ -35,10 +35,19 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts load without blocking first paint; system fonts show meanwhile (display=swap). -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap"
+      />
+    </noscript>
     <!-- Apply the saved/system theme before first paint to avoid a flash. -->
     <script>
       try {
