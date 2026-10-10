@@ -259,17 +259,17 @@ export function ConcreteShelf({ position }) {
 
 /* ---------------- Bed ---------------- */
 /**
- * Double cot, 1.9 m long along x with the head toward the curtains (−x) and the feet at the
- * shelf wall (+x); 1.5 m wide along z against the wall behind the chair. Coir mattress, floral
+ * Double cot along x: the head (and headboard) against the curtain-side wall, the feet at the
+ * shelf; 1.5 m wide along z against the wall behind the chair, so it fills that whole corner. Coir mattress, floral
  * sheet, two pillows and a spread blanket. Origin: floor centre.
  */
-export function Bed({ position }) {
+export function Bed({ position, length = 1.9 }) {
   const sheet = useMemo(() => {
     const t = makeFloralTexture("#5e2a84", "#9b59b6", "#e056a0", 17);
-    t.repeat.set(6, 4);
+    t.repeat.set(Math.round(length * 3), 4);
     return t;
-  }, []);
-  const L = 1.9; // along x
+  }, [length]);
+  const L = length; // along x
   const W = 1.5; // along z
   return (
     <group position={position}>

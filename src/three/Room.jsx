@@ -205,7 +205,8 @@ export default function Room() {
       </Interactive>
       <SwitchPanel position={[ROOM_X1, 1.25, doorZ1 + 0.32]} />
       <ConcreteShelf position={[ROOM_X1, 0, ROOM_Z1 - 0.68]} />
-      <Bed position={[ROOM_X1 - 0.34 - 0.95, 0, ROOM_Z1 - 0.77]} />
+      {/* The bed runs wall to shelf: from the left wall to the front of the shelf */}
+      <Bed position={[(ROOM_X0 + (ROOM_X1 - 0.34)) / 2, 0, ROOM_Z1 - 0.77]} length={ROOM_X1 - 0.34 - ROOM_X0} />
 
       {/* Clothes hooks beside the window, on the back wall */}
       <ClothesHanger position={[1.9, 1.78, BACK_WALL_Z]} />
