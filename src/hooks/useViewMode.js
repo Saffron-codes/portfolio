@@ -2,20 +2,35 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useHashRoute } from "./useHashRoute";
 
 /**
- * Two views, routed by the URL hash:
+ * Three views, routed by the URL hash:
  *   ""                → the portfolio (recruiter) page, always the default
  *   "#desk"           → the 3D desk overview
  *   "#desk/<section>" → a desk section (projects, experience, …)
+ *   "#blog"           → the blog index
+ *   "#blog/<slug>"    → one blog post
  * "#plain" is a legacy alias for the portfolio page. Bare section ids ("#projects") are left
  * to the portfolio page, which treats them as in-page anchors.
  */
 export const DESK_HASH = "desk";
+export const BLOG_HASH = "blog";
 const LEGACY_VIEW_KEY = "view";
 
+const EMPTY = { view: "portfolio", section: null, slug: null, anchor: null };
+
 export function parseViewHash(hash) {
-  if (hash === DESK_HASH) return { view: "desk", section: null, anchor: null };
-  if (hash.startsWith(`${DESK_HASH}/`)) return { view: "desk", section: hash.slice(DESK_HASH.length + 1) || null, anchor: null };
-  return { view: "portfolio", section: null, anchor: hash || null };
+  if (hash === DESK_HASH) return { ...EMPTY, view: "desk" };
+  if (hash.startsWith(`${DESK_HASH}/`)) return { ...EMPTY, view: "desk", section: hash.slice(DESK_HASH.length + 1) || null };
+  if (hash === BLOG_HASH) return { ...EMPTY, view: "blog" };
+  if (hash.startsWith(`${BLOG_HASH}/`)) {
+    let slug = hash.slice(BLOG_HASH.length + 1);
+    try {
+      slug = decodeURIComponent(slug);
+    } catch {
+      /* keep the raw value */
+    }
+    return { ...EMPTY, view: "blog", slug: slug || null };
+  }
+  return { ...EMPTY, anchor: hash || null };
 }
 
 export function useViewMode() {

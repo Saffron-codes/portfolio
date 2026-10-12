@@ -262,6 +262,80 @@
   z-index: 1;
 }
 
+/* ---- Blog post body (rendered from Markdown) ---- */
+.prose-blog {
+  @apply text-[1.0625rem] leading-[1.75] text-ink/80 dark:text-cream/80;
+}
+.prose-blog > * + * {
+  @apply mt-5;
+}
+.prose-blog h2 {
+  @apply mt-12 text-2xl font-bold tracking-tight text-ink dark:text-cream sm:text-3xl;
+}
+.prose-blog h3 {
+  @apply mt-9 text-xl font-semibold tracking-tight text-ink dark:text-cream;
+}
+.prose-blog h4 {
+  @apply mt-7 text-lg font-semibold text-ink dark:text-cream;
+}
+.prose-blog a {
+  @apply font-medium text-sage-700 underline decoration-sage-600/40 underline-offset-[3px] transition-colors hover:decoration-sage-600 dark:text-sage-300 dark:decoration-sage-400/40 dark:hover:decoration-sage-400;
+}
+.prose-blog strong {
+  @apply font-semibold text-ink dark:text-cream;
+}
+.prose-blog ul {
+  @apply list-disc space-y-2.5 pl-6;
+}
+.prose-blog ol {
+  @apply list-decimal space-y-2.5 pl-6;
+}
+.prose-blog li > p + p,
+.prose-blog li > p + pre,
+.prose-blog li > pre + p {
+  @apply mt-3;
+}
+.prose-blog li::marker {
+  @apply text-sage-700 dark:text-sage-300;
+}
+.prose-blog blockquote {
+  @apply border-l-4 border-sage-600/60 pl-5 italic text-ink/75 dark:border-sage-400/60 dark:text-cream/75;
+}
+.prose-blog code {
+  @apply rounded-md bg-ink/[0.07] px-1.5 py-0.5 font-mono text-[0.88em] text-ink dark:bg-cream/10 dark:text-cream;
+}
+.prose-blog pre {
+  @apply overflow-x-auto rounded-2xl border border-ink/10 bg-night-900 p-5 text-sm leading-relaxed text-cream dark:border-cream/10 dark:bg-night-800;
+}
+.prose-blog pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+}
+.prose-blog img {
+  @apply mx-auto rounded-2xl border border-ink/10 dark:border-cream/10;
+}
+.prose-blog hr {
+  @apply my-10 border-ink/10 dark:border-cream/10;
+}
+.prose-blog table {
+  @apply block w-full overflow-x-auto border-collapse text-sm;
+}
+.prose-blog thead {
+  @apply text-left;
+}
+.prose-blog th {
+  @apply border-b border-ink/20 px-3 py-2 font-semibold text-ink dark:border-cream/20 dark:text-cream;
+}
+.prose-blog td {
+  @apply border-b border-ink/10 px-3 py-2 align-top dark:border-cream/10;
+}
+.prose-blog tr:last-child td {
+  @apply border-b-0;
+}
+
 /* Print: black on white, no chrome, nothing hidden by animations */
 @media print {
   .portfolio-page,

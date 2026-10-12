@@ -29,7 +29,7 @@ export default function Contact() {
   return (
     <section id="contact" aria-labelledby="contact-heading" className="scroll-mt-24">
       <Reveal className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-sage-700 via-sage-600 to-night-800 px-6 py-12 text-white shadow-xl dark:from-sage-600 dark:via-night-800 dark:to-night-900 sm:px-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">06 · Contact</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">07 · Contact</p>
         <h2 id="contact-heading" className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
           Let&apos;s build something.
         </h2>

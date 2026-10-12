@@ -10,6 +10,7 @@ import Experience from "./sections/Experience";
 import Projects from "./sections/Projects";
 import Skills from "./sections/Skills";
 import Education from "./sections/Education";
+import Blog from "./sections/Blog";
 import Contact from "./sections/Contact";
 import Footer from "./sections/Footer";
 
@@ -19,6 +20,7 @@ const SECTIONS = [
   { id: "projects", label: "Projects" },
   { id: "skills", label: "Skills" },
   { id: "education", label: "Education" },
+  { id: "blog", label: "Blog" },
   { id: "contact", label: "Contact" },
 ];
 const SECTION_IDS = SECTIONS.map((s) => s.id);
@@ -26,7 +28,7 @@ const SECTION_IDS = SECTIONS.map((s) => s.id);
 /**
  * The portfolio (recruiter) page: the home page. Uses the same data files as the desk scene.
  * Section links scroll without touching the hash; a legacy "#projects"-style hash from an old
- * link is treated as an in-page anchor once.
+ * link is treated as an in-page anchor once. ("#blog" itself opens the blog index, not the section.)
  */
 export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor, onOpenDesk }) {
   const reducedMotion = useReducedMotion();
@@ -82,6 +84,7 @@ export default function PlainView({ theme, onToggleTheme, anchor, onClearAnchor,
         <Projects />
         <Skills />
         <Education />
+        <Blog />
         <Contact />
       </main>
 

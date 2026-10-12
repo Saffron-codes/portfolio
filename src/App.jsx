@@ -6,10 +6,12 @@ import { posterFor } from "./plain/posters";
 
 // The desk (and its panels) only load when someone steps into it.
 const DeskView = lazy(() => import("./DeskView"));
+// The blog (Markdown renderer plus every post) only loads when someone opens it.
+const BlogView = lazy(() => import("./blog/BlogView"));
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
-  const { view, section, anchor, openDesk, closeDesk, openDeskSection, deskOverview, clearAnchor } = useViewMode();
+  const { view, section, slug, anchor, openDesk, closeDesk, openDeskSection, deskOverview, clearAnchor } = useViewMode();
 
   if (view === "desk") {
     return (
@@ -22,6 +24,13 @@ export default function App() {
           onDeskOverview={deskOverview}
           onBackToPortfolio={closeDesk}
         />
+      </Suspense>
+    );
+  }
+  if (view === "blog") {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-cream dark:bg-night-900" aria-busy="true" />}>
+        <BlogView theme={theme} onToggleTheme={toggleTheme} slug={slug} />
       </Suspense>
     );
   }
