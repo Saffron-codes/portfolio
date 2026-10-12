@@ -4,18 +4,10 @@ import profile from "../data/profile";
 import Footer from "../plain/sections/Footer";
 import { iconButton, secondaryButton } from "../plain/styles";
 import Markdown from "./Markdown";
+import RouteLink from "./RouteLink";
 import posts, { findPost, formatDate } from "./posts";
-
-const BASE_TITLE = document.title;
-
-function useDocumentTitle(title) {
-  useEffect(() => {
-    document.title = title ? `${title} · ${profile.name}` : BASE_TITLE;
-    return () => {
-      document.title = BASE_TITLE;
-    };
-  }, [title]);
-}
+import { BLOG_PATH, indexMeta, jsonLd, postMeta, postPath } from "./seo";
+import { useHead } from "./useHead";
 
 function Tags({ tags, className = "" }) {
   if (!tags.length) return null;
@@ -44,24 +36,24 @@ function BlogHeader({ theme, onToggleTheme, onPost }) {
   return (
     <header className="sticky top-0 z-30 border-b border-ink/10 bg-cream/85 backdrop-blur print:hidden dark:border-cream/10 dark:bg-night-900/85">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <a href="#" className="rounded-md text-base font-semibold tracking-tight text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-cream">
+        <RouteLink href="/" className="rounded-md text-base font-semibold tracking-tight text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-cream">
           <span className="hidden sm:inline">{profile.name}</span>
           <span className="sm:hidden">SDT</span>
           <span className="ml-2 text-sm font-medium text-ink/50 dark:text-cream/50">/ Blog</span>
-        </a>
+        </RouteLink>
         <nav aria-label="Blog" className="flex items-center gap-2">
           {onPost && (
-            <a href="#blog" className={`${secondaryButton} hidden sm:inline-flex`}>
+            <RouteLink href={BLOG_PATH} className={`${secondaryButton} hidden sm:inline-flex`}>
               <FaArrowLeft size={12} aria-hidden="true" /> All posts
-            </a>
+            </RouteLink>
           )}
           <button type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={isDark} className={iconButton}>
             {isDark ? <FaSun size={15} aria-hidden="true" /> : <FaMoon size={15} aria-hidden="true" />}
           </button>
-          <a href="#" className={secondaryButton}>
+          <RouteLink href="/" className={secondaryButton}>
             <span className="sm:hidden">Portfolio</span>
             <span className="hidden sm:inline">Back to portfolio</span>
-          </a>
+          </RouteLink>
         </nav>
       </div>
     </header>
@@ -71,8 +63,8 @@ function BlogHeader({ theme, onToggleTheme, onPost }) {
 function PostCard({ post }) {
   return (
     <li>
-      <a
-        href={`#blog/${post.slug}`}
+      <RouteLink
+        href={postPath(post.slug)}
         className="group flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-white/70 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 motion-reduce:transition-none dark:border-cream/10 dark:bg-night-800/70 dark:hover:shadow-black/40 sm:flex-row"
       >
         {post.cover && (
@@ -95,13 +87,14 @@ function PostCard({ post }) {
             Read post <FaArrowRight size={11} aria-hidden="true" className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
           </span>
         </div>
-      </a>
+      </RouteLink>
     </li>
   );
 }
 
 function PostIndex() {
-  useDocumentTitle("Blog");
+  const meta = indexMeta();
+  useHead(meta, jsonLd(meta));
   return (
     <>
       <div className="pb-10 pt-10 sm:pt-16">
@@ -124,8 +117,21 @@ function PostIndex() {
   );
 }
 
+function NeighbourLink({ post, label, align }) {
+  return (
+    <RouteLink
+      href={postPath(post.slug)}
+      className={`group flex-1 rounded-2xl border border-ink/10 p-4 transition-colors hover:border-sage-600 dark:border-cream/10 dark:hover:border-sage-400 ${align === "right" ? "text-right" : ""}`}
+    >
+      <span className="text-xs uppercase tracking-wider text-ink/50 dark:text-cream/50">{label}</span>
+      <span className="mt-1 block font-medium group-hover:text-sage-700 dark:group-hover:text-sage-300">{post.title}</span>
+    </RouteLink>
+  );
+}
+
 function PostPage({ post }) {
-  useDocumentTitle(post.title);
+  const meta = postMeta(post);
+  useHead(meta, jsonLd(meta, post));
   const index = posts.indexOf(post);
   const newer = index > 0 ? posts[index - 1] : null;
   const older = index < posts.length - 1 ? posts[index + 1] : null;
@@ -153,35 +159,21 @@ function PostPage({ post }) {
 
       {(older || newer) && (
         <nav aria-label="More posts" className="mx-auto mt-16 flex max-w-2xl flex-col gap-3 border-t border-ink/10 pt-8 dark:border-cream/10 sm:flex-row sm:justify-between">
-          {older ? (
-            <a href={`#blog/${older.slug}`} className="group flex-1 rounded-2xl border border-ink/10 p-4 transition-colors hover:border-sage-600 dark:border-cream/10 dark:hover:border-sage-400">
-              <span className="text-xs uppercase tracking-wider text-ink/50 dark:text-cream/50">Older</span>
-              <span className="mt-1 block font-medium group-hover:text-sage-700 dark:group-hover:text-sage-300">{older.title}</span>
-            </a>
-          ) : (
-            <span className="flex-1" />
-          )}
-          {newer ? (
-            <a href={`#blog/${newer.slug}`} className="group flex-1 rounded-2xl border border-ink/10 p-4 text-right transition-colors hover:border-sage-600 dark:border-cream/10 dark:hover:border-sage-400">
-              <span className="text-xs uppercase tracking-wider text-ink/50 dark:text-cream/50">Newer</span>
-              <span className="mt-1 block font-medium group-hover:text-sage-700 dark:group-hover:text-sage-300">{newer.title}</span>
-            </a>
-          ) : (
-            <span className="flex-1" />
-          )}
+          {older ? <NeighbourLink post={older} label="Older" /> : <span className="flex-1" />}
+          {newer ? <NeighbourLink post={newer} label="Newer" align="right" /> : <span className="flex-1" />}
         </nav>
       )}
       <p className={`mx-auto max-w-2xl ${older || newer ? "mt-8" : "mt-16 border-t border-ink/10 pt-8 dark:border-cream/10"}`}>
-        <a href="#blog" className="inline-flex items-center gap-2 rounded text-sm font-medium text-sage-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-sage-300">
+        <RouteLink href={BLOG_PATH} className="inline-flex items-center gap-2 rounded text-sm font-medium text-sage-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-sage-300">
           <FaArrowLeft size={12} aria-hidden="true" /> All posts
-        </a>
+        </RouteLink>
       </p>
     </article>
   );
 }
 
 function NotFound({ slug }) {
-  useDocumentTitle("Post not found");
+  useHead({ ...indexMeta(), title: `Post not found · ${profile.name}`, headline: "Post not found", robots: "noindex" });
   return (
     <div className="py-16">
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sage-700 dark:text-sage-300">Blog</p>
@@ -189,14 +181,14 @@ function NotFound({ slug }) {
       <p className="mt-4 max-w-xl text-ink/70 dark:text-cream/70">
         Nothing is published at <code className="rounded bg-ink/5 px-1.5 py-0.5 text-sm dark:bg-cream/10">{slug}</code>. It may have moved or never existed.
       </p>
-      <a href="#blog" className={`${secondaryButton} mt-6`}>
+      <RouteLink href={BLOG_PATH} className={`${secondaryButton} mt-6`}>
         <FaArrowLeft size={12} aria-hidden="true" /> All posts
-      </a>
+      </RouteLink>
     </div>
   );
 }
 
-/** The blog: "#blog" lists every post, "#blog/<slug>" shows one. */
+/** The blog: "/blog/" lists every post, "/blog/<slug>/" shows one. */
 export default function BlogView({ theme, onToggleTheme, slug }) {
   const post = slug ? findPost(slug) : null;
 

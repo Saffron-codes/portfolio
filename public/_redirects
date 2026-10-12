@@ -1,0 +1,2 @@
+# Netlify: static files (prerendered blog pages, assets) win; everything else is the app.
+/*    /index.html   200

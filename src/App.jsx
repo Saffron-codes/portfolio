@@ -1,8 +1,10 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import PlainView from "./plain/PlainView";
 import { useTheme } from "./hooks/useTheme";
 import { useViewMode } from "./hooks/useViewMode";
 import { posterFor } from "./plain/posters";
+import { homeJsonLd, homeMeta } from "./blog/seo";
+import { useHead } from "./blog/useHead";
 
 // The desk (and its panels) only load when someone steps into it.
 const DeskView = lazy(() => import("./DeskView"));
@@ -12,6 +14,10 @@ const BlogView = lazy(() => import("./blog/BlogView"));
 export default function App() {
   const { theme, toggleTheme } = useTheme();
   const { view, section, slug, anchor, openDesk, closeDesk, openDeskSection, deskOverview, clearAnchor } = useViewMode();
+
+  // The portfolio and the desk share the site's own head tags; blog pages set their own.
+  const home = useMemo(() => homeMeta(), []);
+  useHead(view === "blog" ? null : home, homeJsonLd());
 
   if (view === "desk") {
     return (

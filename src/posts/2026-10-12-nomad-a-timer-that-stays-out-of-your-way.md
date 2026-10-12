@@ -2,6 +2,7 @@
 title: "Nomad: a work/break timer that stays out of your way"
 date: 2026-10-12
 summary: "I built Nomad because every focus timer I tried wanted an account, a subscription, or a whole system to learn. Nomad asks for a work length and a break length, then keeps time from your system tray. Free, open source, and now at v1.0 for Windows, macOS and Linux."
+description: "Nomad is a free, open-source work/break timer for Windows, macOS and Linux. No accounts, no cloud: set your routine and it keeps time from the system tray."
 tags: [Nomad, Productivity, Tauri, Rust, Open source]
 cover: /assets/nomad.webp
 coverAlt: "Nomad's home screen: 'Ready when you are' above a 50:00 timer, with the work and break lengths underneath."

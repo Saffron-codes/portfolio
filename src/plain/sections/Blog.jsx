@@ -1,11 +1,13 @@
 import { FaArrowRight } from "react-icons/fa6";
 import posts, { formatDate } from "../../blog/posts";
+import RouteLink from "../../blog/RouteLink";
+import { BLOG_PATH, postPath } from "../../blog/seo";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
 
 const LATEST = 3;
 
-/** The newest posts as cards; the full list lives at "#blog". */
+/** The newest posts as cards; the full list lives at "/blog/". */
 export default function Blog() {
   const latest = posts.slice(0, LATEST);
   return (
@@ -19,8 +21,8 @@ export default function Blog() {
         <ol className="flex flex-col gap-5">
           {latest.map((post, i) => (
             <Reveal as="li" key={post.slug} delay={i * 80}>
-              <a
-                href={`#blog/${post.slug}`}
+              <RouteLink
+                href={postPath(post.slug)}
                 className="group flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-white/70 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 motion-reduce:transition-none dark:border-cream/10 dark:bg-night-800/70 dark:hover:shadow-black/40 sm:flex-row"
               >
                 {post.cover && (
@@ -53,16 +55,16 @@ export default function Blog() {
                     Read post <FaArrowRight size={11} aria-hidden="true" className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
                   </span>
                 </div>
-              </a>
+              </RouteLink>
             </Reveal>
           ))}
         </ol>
       )}
       {posts.length > LATEST && (
         <Reveal className="mt-6">
-          <a href="#blog" className="inline-flex items-center gap-2 rounded text-sm font-medium text-sage-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-sage-300">
+          <RouteLink href={BLOG_PATH} className="inline-flex items-center gap-2 rounded text-sm font-medium text-sage-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-600 dark:text-sage-300">
             All {posts.length} posts <FaArrowRight size={11} aria-hidden="true" />
-          </a>
+          </RouteLink>
         </Reveal>
       )}
     </section>
