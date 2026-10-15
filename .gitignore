@@ -25,3 +25,6 @@ dist-ssr
 
 # Private reference photos (do not publish)
 docs/reference/
+
+# Claude Code worktrees
+.claude/worktrees/
